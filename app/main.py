@@ -29,7 +29,7 @@ app.add_middleware(
     # max_age=600 # for cache
 )
 
-allowed_host = ["localhost", "127.0.0.1", "3.110.154.148", "ec2-3-110-154-148.ap-south-1.compute.amazonaws.com"]
+allowed_host = ["localhost", "127.0.0.1", "13.60.251.251", "alqudsiyah.in"]
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_host)
 
 
