@@ -1,0 +1,9 @@
+venv
+venv/
+venv/*
+app/alembic.ini
+alembic.ini
+app.log
+app/app.log
+__pycache__
+app/__pycache__/
