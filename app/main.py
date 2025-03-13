@@ -29,13 +29,13 @@ app.add_middleware(
     # max_age=600 # for cache
 )
 
-allowed_host = ["localhost", "127.0.0.1", "13.60.251.251", "alqudsiyah.in"]
+allowed_host = ["localhost", "127.0.0.1", "13.126.195.172", "alqudsiyah.in"]
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_host)
 
 
 
 
-admin = Admin(engine, title="ASHRAFI LIGHTS")
+admin = Admin(engine, title="AL QUDSIYAH")
 
 admin.add_view(ModelView(User))
 admin.add_view(ModelView(Product))
