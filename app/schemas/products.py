@@ -12,6 +12,7 @@ class ProductBase(BaseModel):
     description: str | None = None
     slug: str | None = None
     quantity: int | None = None
+    in_stock: int | None = None
     unit: str | None = None
 
 
@@ -25,6 +26,7 @@ class ProductActionBase(BaseModel):
     quantity: int | None = None
     slug: str | None = None
     unit: str | None = None
+    in_stock: int | None = None
 
 
 class ProductImageBase(BaseModel):
@@ -52,6 +54,7 @@ class AdminProductsListBase(BaseModel):
     description: str | None = None
     quantity: int | None = 0
     unit: str | None = None
+    in_stock: int | None = None
     image: str | None = None
 
     class Config:

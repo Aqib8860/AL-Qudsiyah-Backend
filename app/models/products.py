@@ -18,6 +18,7 @@ class Product(Base):
     slug = Column(String, index=True, nullable=True)
     quantity = Column(Integer, default=0)
     unit = Column(String, nullable=True)
+    in_stock = Column(Integer, default=0)
 
     # Add this line to fix the error
     images = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")

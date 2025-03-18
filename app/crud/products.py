@@ -13,6 +13,7 @@ from schemas.products import ProductActionBase, AdminProductsListBase, ProductsL
 
 async def create_product(db: Session, product: ProductActionBase):
     try:
+
         db_product = Product(
             name=product.name, original_price=product.original_price,
             sale_price=product.sale_price,
@@ -21,8 +22,11 @@ async def create_product(db: Session, product: ProductActionBase):
             description=product.description,
             slug=product.slug,
             quantity=product.quantity,
-            unit=product.unit
+            unit=product.unit,
+            in_stock=product.in_stock
+
         )
+        print(db_product)
         
         db.add(db_product)    
         db.commit()
