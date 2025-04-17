@@ -26,7 +26,6 @@ async def create_product(db: Session, product: ProductActionBase):
             in_stock=product.in_stock
 
         )
-        print(db_product)
         
         db.add(db_product)    
         db.commit()
@@ -35,7 +34,7 @@ async def create_product(db: Session, product: ProductActionBase):
         return db_product
     except Exception as e:
         db.rollback()
-        return JSONResponse({"detail": str(e)}, status_code=400)
+        return JSONResponse({"error": str(e)}, status_code=400)
 
 
 # Products List

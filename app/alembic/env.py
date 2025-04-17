@@ -19,7 +19,7 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from models.database import Base
-from models import products, user  # Ensure all models are loaded
+from models import products, users  # Ensure all models are loaded
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

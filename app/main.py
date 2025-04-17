@@ -4,13 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from models.database import engine
-from models.user import User
+from models.users import User
 from models.products import Product, ProductImage
 
-from routers.user import router as user_router
+from routers.users import router as user_router
 from routers.products import router as product_router
 
-from starlette_admin.contrib.sqla import Admin, ModelView
+# from starlette_admin.contrib.sqla import Admin, ModelView
 from logging_config import setup_logging
 
 
@@ -35,13 +35,13 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_host)
 
 
 
-admin = Admin(engine, title="AL QUDSIYAH")
+# admin = Admin(engine, title="AL QUDSIYAH")
 
-admin.add_view(ModelView(User))
-admin.add_view(ModelView(Product))
-admin.add_view(ModelView(ProductImage))
+# admin.add_view(ModelView(User))
+# admin.add_view(ModelView(Product))
+# admin.add_view(ModelView(ProductImage))
 
-admin.mount_to(app)
+# admin.mount_to(app)
 
 app.include_router(user_router)
 app.include_router(product_router)
