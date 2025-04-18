@@ -91,6 +91,15 @@ async def resend_otp_view(db:Session, email: str):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+# Check email already exists
+async def check_email_view(db: Session, email: str):
+    user = db.query(User).filter(User.email == email).first()
+    if user:
+        return JSONResponse({"msg": "Email exists", "exists": True})
+    
+    return JSONResponse({"msg": "Email not exists", "exists": False})
+
+
 # User Login
 async def user_login_view(db: Session, login_user: LoginBase):
     try:

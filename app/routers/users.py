@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from models.database import SessionLocal
 
 from crud.auth import hash_password
-from crud.users import user_register_view, user_login_view, update_user_by_admin_view, user_list_view, user_otp_verify_view, resend_otp_view
+from crud.users import user_register_view, user_login_view, update_user_by_admin_view, user_list_view, user_otp_verify_view, resend_otp_view, check_email_view
 
 from schemas.users import RegisterBase, LoginBase, AdminUpdateUserBase, UserBase, OtpVerify
 
@@ -25,6 +25,12 @@ async def user_register(user: RegisterBase, db: Session = Depends(get_db)):
     return await user_register_view(db=db, user=user, unsafe_password=unsafe_password)
 
 
+# User Login
+@router.post("/user/login/")
+async def user_register(login_user: LoginBase, db: Session = Depends(get_db)):
+    return await user_login_view(db=db, login_user=login_user)
+
+
 # OTP Verify
 @router.post("/user/verify/")
 async def user_otp_verify(data: OtpVerify, db: Session = Depends(get_db)):
@@ -36,6 +42,12 @@ async def user_otp_verify(data: OtpVerify, db: Session = Depends(get_db)):
 async def resend_otp(email: str, db: Session = Depends(get_db)):
 
     return await resend_otp_view(db=db, email=email)
+
+
+# Check Email already exists
+@router.get("/user/check-email/{email}/")
+async def check_email(email: str, db: Session = Depends(get_db)):
+    return await check_email_view(db=db, email=email)
 
 
 # Update User - By Admin
