@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, UploadFile, File
+from fastapi import APIRouter, Depends, Form, UploadFile, File, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from models.database import SessionLocal
@@ -33,8 +33,11 @@ async def create_new_product(product: ProductActionBase, db: Session = Depends(g
 
 # Get Products List
 @router.get("/products-list/", response_model=list[ProductsListBase])
-async def get_products_list(db: Session = Depends(get_db)):
-    return await get_all_products(db=db)
+async def get_products_list(
+    limit: int = Query(10, ge=1), 
+    category: str | None = None,
+    db: Session = Depends(get_db)):
+    return await get_all_products(db=db, limit=limit, category=category)
 
 
 # Get Products List - Admin Only

@@ -38,9 +38,13 @@ async def create_product(db: Session, product: ProductActionBase):
 
 
 # Products List
-async def get_all_products(db: Session):
-    query = db.query(Product)
-    products =  query.order_by(Product.id.desc()).options(selectinload(Product.images)).all()
+async def get_all_products(db: Session, limit: int, category: str):
+    query = db.query(Product).order_by(Product.id.desc()).options(selectinload(Product.images))
+
+    if category:
+        query = query.filter(Product.category == category)
+
+    products = query.limit(limit).all()
     return [await ProductsListBase.get_image_data(product) for product in products]
 
 
