@@ -1,5 +1,7 @@
 import os
 import jwt
+import requests
+from fastapi import HTTPException, Depends
 from datetime import timedelta, datetime
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
@@ -35,3 +37,45 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+def verify_access_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")    
+
+
+# Get the current user from the token
+def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
+    payload = verify_access_token(token)
+    return payload
+
+
+
+def verify_google_token(access_token: str):
+    """Verify Google Access token and extract user info"""
+    google_url = f"https://www.googleapis.com/oauth2/v3/tokeninfo?access_token={access_token}"
+    response = requests.get(google_url)
+    
+    if response.status_code != 200:
+        raise HTTPException(status_code=400, detail="Invalid Google token")
+    
+    user_data = response.json()
+
+    # Get Profile from google
+    try:
+        profile_url = "https://people.googleapis.com/v1/people/me?personFields=names"
+        headers = {"Authorization": f"Bearer {access_token}"}
+        profile_response = requests.get(profile_url, headers=headers)
+
+        if profile_response.status_code == 200:
+            profile = profile_response.json()
+            user_data["name"] = profile["names"][0]["displayName"]
+    except Exception as e:
+        pass
+
+    
+    return user_data 
+

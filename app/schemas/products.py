@@ -96,9 +96,26 @@ class ProductsDetailBase(BaseModel):
     category: str | None = None
     description: str | None = None
     slug: str | None = None
-    image: str | None = None
     quantity: int | None = None
     unit: str | None = None
+
+    class Config:
+        from_attributes = True
+    
+    @classmethod
+    async def get_response_data(cls, product: Dict[str, Any]):
+        return product if product else None
+
+
+class CatProductBase(BaseModel):
+    id: int | None = None
+    name: str | None = None
+    sale_price: float | None = None
+    original_price: float | None = None
+    is_available: bool | None = None
+    category: str | None = None
+    description: str | None = None
+    image: str | None = None
 
     class Config:
         from_attributes = True
@@ -109,4 +126,19 @@ class ProductsDetailBase(BaseModel):
             product.image = product.images[0].image_url if product.images else None
         return product if product else None
 
+
+class UserCartBase(BaseModel):
+    id: int | None = None
+    products: list[CatProductBase] | None = []
+
+
+class AddToCartBase(BaseModel):
+    product_id: int
+    quantity: int | None = 1
+
+
+class PincodeBase(BaseModel):
+    id: int | None = None
+    pincode: str
+    active: bool | None = False
 

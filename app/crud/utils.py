@@ -18,3 +18,17 @@ async def generate_otp(db, email):
 
     return otp
 
+
+def generate_name(name):
+    first_name = None
+    last_name = None
+    if name: 
+        name_list = name.split(" ")
+        if name_list and len(name_list) == 2:
+            first_name = name_list[0]
+            last_name = name_list[1]
+        else:
+            first_name = name
+    
+    return first_name, last_name
+

@@ -23,6 +23,29 @@ class Product(Base):
     # Add this line to fix the error
     images = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")
     rating_review = relationship("RatingReview", back_populates="product_rating_review", cascade="all, delete-orphan")
+    
+    # Many-to-many relationship with Cart
+    carts = relationship("Cart", secondary="product_cart_association", back_populates="products")
+
+
+class Cart(Base):
+    __tablename__ = "cart"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    user = relationship("User", back_populates="carts")
+    # Many to many relationship with Product
+    products = relationship("Product", secondary="product_cart_association", back_populates="carts")
+    
+
+# To store multiple products in cart
+class ProductCartAssociation(Base):
+    __tablename__ = "product_cart_association"
+
+    product_id = Column(Integer, ForeignKey("products.id"), primary_key=True)
+    cart_id = Column(Integer, ForeignKey("cart.id"), primary_key=True)
+    quantity = Column(Integer, default=1)
 
 
 class ProductImage(Base):
@@ -44,3 +67,12 @@ class RatingReview(Base):
     reveiew = Column(Text, nullable=True)
 
     product_rating_review = relationship("Product", back_populates="rating_review")
+
+
+class Pincode(Base):
+    __tablename__ = "pincode"
+    id = Column(Integer, primary_key=True, index=True)
+    pincode = Column(String, index=True, nullable=True)
+    active = Column(Boolean, default=False)
+
+

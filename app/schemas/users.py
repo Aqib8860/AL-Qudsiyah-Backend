@@ -18,7 +18,8 @@ class OtpVerify(BaseModel):
 
 class LoginBase(BaseModel):
     email: str
-    password: str
+    password: str | None =  None  # Optional for Google login
+    access_token: str | None = None # Optional for Oauth2 token
 
 
 class UserBase(BaseModel):

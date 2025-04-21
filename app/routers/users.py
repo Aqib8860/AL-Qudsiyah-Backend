@@ -2,8 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from models.database import SessionLocal
 
-from crud.auth import hash_password
-from crud.users import user_register_view, user_login_view, update_user_by_admin_view, user_list_view, user_otp_verify_view, resend_otp_view, check_email_view
+from crud.auth import hash_password, get_current_user
+from crud.users import (
+    user_register_view, user_login_view, update_user_by_admin_view, user_list_view, user_otp_verify_view, resend_otp_view, check_email_view,
+    get_user_view, delete_user_by_admin_view
+)
 
 from schemas.users import RegisterBase, LoginBase, AdminUpdateUserBase, UserBase, OtpVerify
 
@@ -60,6 +63,24 @@ async def update_user_by_admin(
     return await update_user_by_admin_view(db=db, user_id=user_id, updated_user=updated_user)
 
 
+# Update User - By Admin
+@router.delete("/admin/user/{user_id}/", response_model=UserBase)
+async def delete_user_by_admin(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    return await delete_user_by_admin_view(db=db, user_id=user_id)
+
+
+
 @router.get("/admin/users-list/", response_model=list[UserBase])
 async def users_list(db: Session = Depends(get_db)):
     return await user_list_view(db=db)
+
+
+@router.get("/user/", response_model=UserBase)
+async def user(
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return await get_user_view(db=db, user=user)

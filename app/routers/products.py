@@ -2,11 +2,18 @@ from fastapi import APIRouter, Depends, Form, UploadFile, File, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from models.database import SessionLocal
-from schemas.products import ProductActionBase, ProductBase, ProductImageBase, ProductCategoriesBase, AdminProductsListBase, ProductsListBase, ProductBase, ProductsDetailBase
+
+from schemas.products import (
+    ProductActionBase, ProductBase, ProductImageBase, ProductCategoriesBase, AdminProductsListBase, ProductsListBase, ProductBase, ProductsDetailBase, UserCartBase, AddToCartBase, 
+    PincodeBase
+    )
+
+from crud.auth import get_current_user
 from crud.products import (
     create_product, get_all_products, add_product_image_view, get_product_images_view, get_product_categories_view, delete_product_view,  update_product_view, delete_product_image_view,
-    admin_products_list_view, get_product_view
+    admin_products_list_view, get_product_view, user_cart_view, add_to_cart_view, delete_from_cart_view, add_pincode_view, pincodes_list_view, check_pincode_delivery_view
 )
+
 
 router = APIRouter()
 
@@ -109,4 +116,59 @@ async def delete_product_image(image_id: int, db: Session = Depends(get_db)):
 
 # =================================================================================================
 
+
+#--------------------------------------------------------------------------------------------------
+# User Cart 
+@router.get("/user/cart/", response_model=UserCartBase)
+async def user_cart(
+    user: dict = Depends(get_current_user), 
+    db: Session = Depends(get_db)):
+    
+    return await user_cart_view(db=db, user=user)
+
+
+@router.post("/product/add-to-cart/", response_model=UserCartBase)
+async def add_to_cart(
+    cart_data: AddToCartBase,
+    user: dict = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    return await add_to_cart_view(db=db, user=user, cart=cart_data)
+
+
+@router.delete("/user/cart/{product_id}/")
+async def delete_from_cart(
+    product_id: int,
+    user: dict = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    return await delete_from_cart_view(db=db, user=user, product_id=product_id)
+
+# ========================================================================================================
+
+# Pincode
+@router.post("/admin/pincode/", response_model=PincodeBase)
+async def add_pincode(
+    pincode_data: PincodeBase,
+    user: dict = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    return await add_pincode_view(db=db, user=user, pincode_data=pincode_data)
+
+
+@router.get("/admin/pincodes/", response_model=list[PincodeBase])
+async def pincodes_list(
+    user: dict = Depends(get_current_user), 
+    db: Session = Depends(get_db)):
+    
+    return await pincodes_list_view(db=db, user=user)
+
+
+# Check Delviry Available
+@router.get("/check-delivery/{pincode}/")
+async def check_pincode_delivery(
+    pincode: str,
+    db: Session = Depends(get_db)):
+    
+    return await check_pincode_delivery_view(db=db, pincode=pincode)
 
