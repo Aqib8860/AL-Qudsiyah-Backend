@@ -215,7 +215,7 @@ async def user_list_view(db: Session):
 
 async def get_user_view(db: Session, user: dict):
     try:
-        print("User", user)
+    
         user_data = db.query(User).filter(User.id == user["id"]).first()
         if not user:
             return JSONResponse({"error": "User not exists"}, status_code=400)
