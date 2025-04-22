@@ -16,7 +16,7 @@ from logging_config import setup_logging
 
 setup_logging()
 
-app = FastAPI(root_path="/api")
+app = FastAPI(root_path="/backend")
 
 allowed_origins = ['*']
 
