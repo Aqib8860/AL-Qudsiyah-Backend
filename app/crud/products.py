@@ -215,32 +215,35 @@ async def user_cart_view(db: Session, user: dict):
 
 
 async def add_to_cart_view(db: Session, user: dict, cart: AddToCartBase):
-    # Get User Cart
-    user_cart = db.query(Cart).filter(Cart.user_id == user["id"]).first()
-    # If user not have cart then create
-    if not user_cart:
-        db_cart = Cart(user_id=user["id"])
-        db.add(db_cart)
-        db.commit()
-        db.refresh(db_cart)    
+    try:
+        # Get User Cart
         user_cart = db.query(Cart).filter(Cart.user_id == user["id"]).first()
+        # If user not have cart then create
+        if not user_cart:
+            db_cart = Cart(user_id=user["id"])
+            db.add(db_cart)
+            db.commit()
+            db.refresh(db_cart)    
+            user_cart = db.query(Cart).filter(Cart.user_id == user["id"]).first()
 
-    # Check product in already in cart
-    product_cart = db.query(ProductCartAssociation).filter(
-        ProductCartAssociation.product_id== cart.product_id, 
-        ProductCartAssociation.cart_id == user_cart.id
-        ).first()
-    if product_cart:
-        return JSONResponse({"error": "Item already in cart"}, status_code=400)
-    
-    # Add Product in cart
-    db_product_cart = ProductCartAssociation(product_id=cart.product_id, cart_id=user_cart.id)
+        # Check product in already in cart
+        product_cart = db.query(ProductCartAssociation).filter(
+            ProductCartAssociation.product_id== cart.product_id, 
+            ProductCartAssociation.cart_id == user_cart.id
+            ).first()
+        if product_cart:
+            return JSONResponse({"msg": "Item already in cart"}, status_code=200)
+        
+        # Add Product in cart
+        db_product_cart = ProductCartAssociation(product_id=cart.product_id, cart_id=user_cart.id, quantity=cart.quantity)
 
-    db.add(db_product_cart)
-    db.commit()
-    db.refresh(db_product_cart)    
-    
-    return JSONResponse({"msg": "Product Added to Cart"})
+        db.add(db_product_cart)
+        db.commit()
+        db.refresh(db_product_cart)    
+        
+        return JSONResponse({"msg": "Product Added to Cart"})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
     
     # product_cart = ProductCartAssociation(cart_id=db)
 
