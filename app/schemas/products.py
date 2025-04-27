@@ -116,6 +116,7 @@ class CatProductBase(BaseModel):
     category: str | None = None
     description: str | None = None
     image: str | None = None
+    quantity: int | None = 1
 
     class Config:
         from_attributes = True

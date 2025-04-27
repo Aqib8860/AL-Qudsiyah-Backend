@@ -185,7 +185,7 @@ async def user_cart_view(db: Session, user: dict):
         db.add(db_cart)
         db.commit()
         db.refresh(db_cart)    
-        user_cart = db.query(Cart).filter(Cart.user_id == user["id"]).first()
+        cart = db.query(Cart).filter(Cart.user_id == user["id"]).first()
         
     if not cart.products:
         return JSONResponse({
@@ -203,6 +203,7 @@ async def user_cart_view(db: Session, user: dict):
             "in_stock": product.in_stock,
             "unit": product.unit,
             "description": product.description,
+            "quantity": product.quantity,
             "image": product.images[0].image_url if product.images else None
         }
         for product in cart.products
