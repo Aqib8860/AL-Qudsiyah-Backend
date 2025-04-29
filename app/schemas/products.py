@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Dict, Any
+from datetime import datetime
 
 
 class ProductBase(BaseModel):
@@ -142,4 +143,26 @@ class PincodeBase(BaseModel):
     id: int | None = None
     pincode: str
     active: bool | None = False
+
+
+class CreateOrderBase(BaseModel):
+    id: int | None = None
+    product_id: int | None = None
+    address: str | None = None
+    created_on: datetime | None = None
+
+
+class OrderBase(BaseModel):
+    id: int | None = None
+    product_id: int | None = None
+    address: str | None = None
+    total_amount: int | None = None
+    status: str | None = None
+    created_on: datetime | None = None
+
+
+class CheckoutBase(BaseModel):
+    customer_phone: str
+    address: str
+    
 

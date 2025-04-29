@@ -20,6 +20,7 @@ class User(Base):
     last_login = Column(DateTime, nullable=True)
 
     carts = relationship("Cart", back_populates="user", cascade="all, delete-orphan")
+    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
 
 class UserOtp(Base):
     __tablename__ = "otp"

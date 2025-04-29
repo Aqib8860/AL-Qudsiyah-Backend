@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Boolean, Text, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Boolean, Text, ForeignKey, Float, DateTime
 from sqlalchemy.orm import relationship
+from datetime import datetime
 
 from .database import Base
 
@@ -23,9 +24,13 @@ class Product(Base):
     # Add this line to fix the error
     images = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")
     rating_review = relationship("RatingReview", back_populates="product_rating_review", cascade="all, delete-orphan")
+    orders = relationship("Order", back_populates="product", cascade="all, delete-orphan")
     
+
     # Many-to-many relationship with Cart
     carts = relationship("Cart", secondary="product_cart_association", back_populates="products")
+    
+    
 
 
 class Cart(Base):
@@ -33,7 +38,7 @@ class Cart(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    
+
     user = relationship("User", back_populates="carts")
     # Many to many relationship with Product
     products = relationship("Product", secondary="product_cart_association", back_populates="carts")
@@ -71,8 +76,38 @@ class RatingReview(Base):
 
 class Pincode(Base):
     __tablename__ = "pincode"
+    
     id = Column(Integer, primary_key=True, index=True)
     pincode = Column(String, index=True, nullable=True)
     active = Column(Boolean, default=False)
 
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    address = Column(Text, nullable=True)
+    total_amount = Column(Text, nullable=True)
+    status = Column(String, default="PENDING", nullable=True)
+    created_on = Column(DateTime, default=datetime.now(), nullable=True)
+
+    product = relationship("Product", back_populates="orders")
+    user = relationship("User", back_populates="orders")
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+
+    id = Column(Integer, primary_key=True)
+    cart_id = Column(Integer, nullable=True)
+    products = Column(String, nullable=True)
+    address = Column(Text, nullable=True)
+    customer_phone = Column(String, nullable=True)
+    amount_paid = Column(Integer, nullable=True)
+    paid_on = Column(DateTime, nullable=True)
+    transaction_no = Column(String, nullable=True)
+    status = Column(String, default="PENDING", nullable=True)
+    created_on = Column(DateTime, default=datetime.now(), nullable=True)
 

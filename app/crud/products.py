@@ -1,4 +1,5 @@
 import io
+import requests
 from fastapi import UploadFile
 from sqlalchemy.orm import selectinload
 from datetime import datetime
@@ -6,9 +7,10 @@ from sqlalchemy.orm import Session
 from fastapi.responses import JSONResponse
 
 from .file_upload import upload_to_s3
-from models.products import Product, ProductImage, Cart, ProductCartAssociation, Pincode
+from models.products import Product, ProductImage, Cart, ProductCartAssociation, Pincode, Order, Payment
 from schemas.products import (
-    ProductActionBase, AdminProductsListBase, ProductsListBase,  AddToCartBase, PincodeBase)
+    ProductActionBase, AdminProductsListBase, ProductsListBase,  AddToCartBase, PincodeBase, OrderBase, CreateOrderBase, CheckoutBase
+    )
 
 # ------------------------------------- Product ----------------------------------------------------------------
 
@@ -289,3 +291,101 @@ async def pincodes_list_view(db: Session, user: dict):
 async def check_pincode_delivery_view(db: Session, pincode: str):
     availabilty = db.query(Pincode).filter(Pincode.pincode == pincode, Pincode.active == True).first()
     return JSONResponse({"available": True if availabilty else False})
+
+
+async def add_order_view(db: Session, order: CreateOrderBase, user: dict):
+    product = db.query(Product).filter(id=order.product_id).first()
+    if not product:
+        return JSONResponse({"error": "Product not exists"}, status_code=404)
+
+    db_order = Order(
+        product_id=order.product_id, 
+        user_id=user["id"],
+        address=order.address,
+        total_amount=product.sale_price
+    )
+
+    db.add(db_order)
+    db.commit()
+    db.refresh(db_order)
+
+    return db_order
+
+
+async def checkout_view(db: Session, user: dict, checkout_data: CheckoutBase):
+    # Get user cart
+    cart = db.query(Cart).filter(Cart.user_id == user['id']).first()
+    if not cart:
+        return JSONResponse({"error": "Cart not exists"}, status_code=404)
+    
+    # If cart does not have product
+    if not cart.products:
+        return JSONResponse({"error": "Cart is empty"}, status_code=400)
+    
+    total_amount = 0
+    product_ids = ""
+
+    for product in cart.products:
+        total_amount += product.sale_price
+        if product_ids:
+            product_ids += f",{product.id}"
+        else:
+            product_ids += f"{product.id}"
+
+    db_payment = Payment(amount_paid=total_amount, products=product_ids, address=checkout_data.address, customer_phone=checkout_data.customer_phone)
+    
+    url = "https://sandbox.cashfree.com/pg/orders"
+    payload = {
+        "order_currency": "INR",
+        "order_amount": total_amount,
+        "customer_details": {
+            "customer_id": f"{user["id"]}",
+            "customer_phone": checkout_data.customer_phone
+        }
+    }
+    
+    headers = {
+        "x-api-version": "2025-01-01",
+        "x-client-id": "2416424c2b8b07903c54c9c530246142",
+        "x-client-secret": "TEST5e8ce57ea8d7f0736cb8b68ce3798e787fc974de",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(url=url, json=payload, headers=headers)
+    
+    if response.status_code != 200:
+        return JSONResponse(response.json(), status_code=response.status_code)
+    
+    cashfree_data = response.json()
+
+    db_payment.transaction_no = cashfree_data["order_id"]
+    db.add(db_payment)
+    db.commit()
+    db.refresh(db_payment)
+
+    
+    return JSONResponse({"session_id": cashfree_data["payment_session_id"]})
+
+
+async def cashfree_view(db: Session):
+    url = "https://sandbox.cashfree.com/pg/orders"
+    payload = {
+        "order_currency": "INR",
+        "order_amount": 10.34,
+        "customer_details": {
+            "customer_id": "7112AAA812234",
+            "customer_phone": "9898989898"
+        }
+    }
+    
+    headers = {
+        "x-api-version": "2025-01-01",
+        "x-client-id": "2416424c2b8b07903c54c9c530246142",
+        "x-client-secret": "TEST5e8ce57ea8d7f0736cb8b68ce3798e787fc974de",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(url=url, json=payload, headers=headers)
+
+    return JSONResponse(response.json(), status_code=response.status_code)
+

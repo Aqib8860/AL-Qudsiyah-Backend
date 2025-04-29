@@ -5,13 +5,14 @@ from models.database import SessionLocal
 
 from schemas.products import (
     ProductActionBase, ProductBase, ProductImageBase, ProductCategoriesBase, AdminProductsListBase, ProductsListBase, ProductBase, ProductsDetailBase, UserCartBase, AddToCartBase, 
-    PincodeBase
+    PincodeBase, OrderBase, CreateOrderBase, CheckoutBase
     )
 
 from crud.auth import get_current_user
 from crud.products import (
     create_product, get_all_products, add_product_image_view, get_product_images_view, get_product_categories_view, delete_product_view,  update_product_view, delete_product_image_view,
-    admin_products_list_view, get_product_view, user_cart_view, add_to_cart_view, delete_from_cart_view, add_pincode_view, pincodes_list_view, check_pincode_delivery_view
+    admin_products_list_view, get_product_view, user_cart_view, add_to_cart_view, delete_from_cart_view, add_pincode_view, pincodes_list_view, check_pincode_delivery_view, add_order_view,
+    checkout_view, cashfree_view
 )
 
 
@@ -150,7 +151,7 @@ async def delete_from_cart(
 @router.post("/admin/pincode/", response_model=PincodeBase)
 async def add_pincode(
     pincode_data: PincodeBase,
-    user: dict = Depends(get_current_user), 
+    user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     return await add_pincode_view(db=db, user=user, pincode_data=pincode_data)
@@ -172,3 +173,33 @@ async def check_pincode_delivery(
     
     return await check_pincode_delivery_view(db=db, pincode=pincode)
 
+
+# -------Order ---------------------
+@router.post("/user/order/", response_model=OrderBase)
+async def add_order(
+    order: CreateOrderBase,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return await add_order_view(db=db, order=order, user=user)
+
+
+# Checkout ----------------------------------------------
+@router.post("/user/checkout/")
+async def checkout(
+    checkout_data: CheckoutBase,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)    
+):
+    return await checkout_view(db=db, user=user, checkout_data=checkout_data)
+
+
+# Cashfree order -----------------------------------------
+@router.post("/create/order/")
+async def cashfree_order(
+    db: Session = Depends(get_db)
+):
+    return await cashfree_view(db=db)
+
+
+# Payments
