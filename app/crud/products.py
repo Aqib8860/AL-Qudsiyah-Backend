@@ -1,16 +1,21 @@
 import io
+import os
 import requests
 from fastapi import UploadFile
 from sqlalchemy.orm import selectinload
 from datetime import datetime
 from sqlalchemy.orm import Session
 from fastapi.responses import JSONResponse
+from dotenv import load_dotenv
 
 from .file_upload import upload_to_s3
 from models.products import Product, ProductImage, Cart, ProductCartAssociation, Pincode, Order, Payment
 from schemas.products import (
     ProductActionBase, AdminProductsListBase, ProductsListBase,  AddToCartBase, PincodeBase, OrderBase, CreateOrderBase, CheckoutBase
     )
+
+
+load_dotenv()
 
 # ------------------------------------- Product ----------------------------------------------------------------
 
@@ -341,13 +346,17 @@ async def checkout_view(db: Session, user: dict, checkout_data: CheckoutBase):
         "customer_details": {
             "customer_id": f"{user["id"]}",
             "customer_phone": checkout_data.customer_phone
+        },
+        "order_meta": {
+            "return_url": os.environ.get("CASHFREE_REDIRECT_URL"),
         }
+
     }
     
     headers = {
-        "x-api-version": "2025-01-01",
-        "x-client-id": "2416424c2b8b07903c54c9c530246142",
-        "x-client-secret": "TEST5e8ce57ea8d7f0736cb8b68ce3798e787fc974de",
+        "x-api-version": os.environ.get("CASHFREE_API_VERSION"),
+        "x-client-id": os.environ.get("CASHFREE_CLIENT_ID"),
+        "x-client-secret": os.environ.get("CASHFREE_CLIENT_SECRET"),
         "Content-Type": "application/json"
     }
 
