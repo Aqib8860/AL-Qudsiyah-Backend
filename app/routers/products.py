@@ -5,14 +5,14 @@ from models.database import SessionLocal
 
 from schemas.products import (
     ProductActionBase, ProductBase, ProductImageBase, ProductCategoriesBase, AdminProductsListBase, ProductsListBase, ProductBase, ProductsDetailBase, UserCartBase, AddToCartBase, 
-    PincodeBase, OrderBase, CreateOrderBase, CheckoutBase
+    PincodeBase, OrderBase, CreateOrderBase, CheckoutBase, CashfreeWebhookBase, PaymentBase, UserOrderBase
     )
 
 from crud.auth import get_current_user
 from crud.products import (
     create_product, get_all_products, add_product_image_view, get_product_images_view, get_product_categories_view, delete_product_view,  update_product_view, delete_product_image_view,
     admin_products_list_view, get_product_view, user_cart_view, add_to_cart_view, delete_from_cart_view, add_pincode_view, pincodes_list_view, check_pincode_delivery_view, add_order_view,
-    checkout_view, cashfree_view
+    checkout_view, cashfree_view, cashfree_webhook_view, payments_view, orders_list_view, user_orders_list_view
 )
 
 
@@ -175,6 +175,14 @@ async def check_pincode_delivery(
 
 
 # -------Order ---------------------
+@router.get("/user/orders/", response_model=list[UserOrderBase])
+async def user_orders_list(
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return await user_orders_list_view(db=db, user=user)
+
+
 @router.post("/user/order/", response_model=OrderBase)
 async def add_order(
     order: CreateOrderBase,
@@ -184,15 +192,31 @@ async def add_order(
     return await add_order_view(db=db, order=order, user=user)
 
 
+@router.get("/admin/orders/", response_model=list[OrderBase])
+async def orders_list(
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return await orders_list_view(db=db)
+
+
 # Checkout ----------------------------------------------
 @router.post("/user/checkout/")
 async def checkout(
     checkout_data: CheckoutBase,
     user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)    
+    db: Session = Depends(get_db)
 ):
     return await checkout_view(db=db, user=user, checkout_data=checkout_data)
 
+
+@router.post("/cashfree/webhook/")
+async def cashfree_webhook(
+    data: CashfreeWebhookBase,
+    db: Session = Depends(get_db)
+    
+):
+    return await cashfree_webhook_view(db=db, data=data)
 
 # Cashfree order -----------------------------------------
 @router.post("/create/order/")
@@ -203,3 +227,9 @@ async def cashfree_order(
 
 
 # Payments
+@router.get("/admin/payments/", response_model=list[PaymentBase])
+async def payments_list(
+    db: Session = Depends(get_db)
+):
+    return await payments_view(db=db)
+

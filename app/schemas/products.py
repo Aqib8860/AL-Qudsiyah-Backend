@@ -157,12 +157,52 @@ class OrderBase(BaseModel):
     product_id: int | None = None
     address: str | None = None
     total_amount: int | None = None
+    user_id: int | None = None
     status: str | None = None
     created_on: datetime | None = None
+
+
+class UserOrderBase(BaseModel):
+    id: int | None = None
+    product_id: int | None = None
+    product_name: str | None = None
+    address: str | None = None
+    total_amount: int | None = None
+    user_id: int | None = None
+    image: str | None = None
+    status: str | None = None
+    created_on: datetime | None = None
+    
+    class Config:
+        from_attributes = True
+    
+    @classmethod
+    async def get_image_data(cls, order: Dict[str, Any]):
+        if order.product:
+            order.image = order.product.images[0].image_url if order.product.images else None
+            order.product_name = order.product.name if order.product else None
+        return order if order else None
 
 
 class CheckoutBase(BaseModel):
     customer_phone: str
     address: str
     
+
+class CashfreeWebhookBase(BaseModel):
+    data: dict | None = None
+
+
+class PaymentBase(BaseModel):
+    id: int | None = None
+    products: str | None = None
+    address: str | None = None
+    customer_phone: str | None = None
+    amount_paid: float | None = None
+    paid_on: datetime | None = None
+    transaction_no: str | None = None
+    orders: str | None = None
+    payment_method: str | None = None
+    status: str | None = None
+    created_on: datetime | None = None
 

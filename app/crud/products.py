@@ -9,9 +9,13 @@ from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
 from .file_upload import upload_to_s3
-from models.products import Product, ProductImage, Cart, ProductCartAssociation, Pincode, Order, Payment
+from .orders import do_orders_success
+
+from models.products import Product, ProductImage, Cart, ProductCartAssociation, Pincode, Order, Payment, PaymentWebhook
+
 from schemas.products import (
-    ProductActionBase, AdminProductsListBase, ProductsListBase,  AddToCartBase, PincodeBase, OrderBase, CreateOrderBase, CheckoutBase
+    ProductActionBase, AdminProductsListBase, ProductsListBase,  AddToCartBase, PincodeBase, OrderBase, CreateOrderBase, CheckoutBase,
+    UserOrderBase
     )
 
 
@@ -297,7 +301,24 @@ async def check_pincode_delivery_view(db: Session, pincode: str):
     availabilty = db.query(Pincode).filter(Pincode.pincode == pincode, Pincode.active == True).first()
     return JSONResponse({"available": True if availabilty else False})
 
+# Orders List -------------------------------------------------------------
+async def user_orders_list_view(db: Session, user: dict):
+    orders = db.query(Order).filter(Order.user_id == user["id"]).order_by(Order.created_on.desc())
+    if orders:
+        return [await UserOrderBase.get_image_data(order) for order in orders]
 
+    return JSONResponse([])
+
+
+async def orders_list_view(db: Session):
+    orders = db.query(Order)
+    if orders:
+        return orders
+
+    return JSONResponse([])
+
+
+# Add Order
 async def add_order_view(db: Session, order: CreateOrderBase, user: dict):
     product = db.query(Product).filter(id=order.product_id).first()
     if not product:
@@ -328,21 +349,46 @@ async def checkout_view(db: Session, user: dict, checkout_data: CheckoutBase):
         return JSONResponse({"error": "Cart is empty"}, status_code=400)
     
     total_amount = 0
-    product_ids = ""
+    orders = ""
 
     for product in cart.products:
-        total_amount += product.sale_price
-        if product_ids:
-            product_ids += f",{product.id}"
-        else:
-            product_ids += f"{product.id}"
 
-    db_payment = Payment(amount_paid=total_amount, products=product_ids, address=checkout_data.address, customer_phone=checkout_data.customer_phone)
-    
+        # Create Order   
+        db_order = Order(
+            product_id=product.id, 
+            user_id=user["id"],
+            address=checkout_data.address,
+            total_amount=product.sale_price
+        )
+        db.add(db_order)
+        db.commit()
+        db.refresh(db_order)
+
+        # Calculate Total Price
+        total_amount += product.sale_price
+        if orders:
+            orders += f",{db_order.id}"
+        else:
+            orders += f"{db_order.id}"
+
+    # Add Payment
+    db_payment = Payment(
+        amount_paid=total_amount, orders=orders, address=checkout_data.address, 
+        customer_phone=checkout_data.customer_phone, user_id= user['id']
+    )
+
+    db.add(db_payment)
+    db.commit()
+    db.refresh(db_payment)
+
+    # Cashfree Data
     url = "https://sandbox.cashfree.com/pg/orders"
     payload = {
         "order_currency": "INR",
         "order_amount": total_amount,
+        "order_tags": {
+            "payment_id": str(db_payment.id),
+        },
         "customer_details": {
             "customer_id": f"{user["id"]}",
             "customer_phone": checkout_data.customer_phone
@@ -350,7 +396,6 @@ async def checkout_view(db: Session, user: dict, checkout_data: CheckoutBase):
         "order_meta": {
             "return_url": os.environ.get("CASHFREE_REDIRECT_URL"),
         }
-
     }
     
     headers = {
@@ -368,12 +413,51 @@ async def checkout_view(db: Session, user: dict, checkout_data: CheckoutBase):
     cashfree_data = response.json()
 
     db_payment.transaction_no = cashfree_data["order_id"]
-    db.add(db_payment)
     db.commit()
     db.refresh(db_payment)
 
     
     return JSONResponse({"session_id": cashfree_data["payment_session_id"]})
+
+
+async def cashfree_webhook_view(db: Session, data: dict):
+    data = data.model_dump()
+
+    db_payment_webhook = PaymentWebhook(data=str(data))
+    db.add(db_payment_webhook)
+    db.commit()
+
+    if not "data" in data.keys():
+        return
+    
+    data = data["data"]
+
+    if not "payment" in data.keys():
+        return    
+    
+    order = data["order"]
+    cashfree_payment = data["payment"]
+
+    payment_id = order["order_tags"]["payment_id"]
+
+    # Get Payment
+    payment = db.query(Payment).filter(Payment.id == int(payment_id)).first()
+
+    # Payment - Success or User Drop - User Drop Validation Remaaining
+    payment.status = cashfree_payment["payment_status"]
+    payment.paid_on = cashfree_payment["payment_time"]
+    db.commit()
+    db.refresh(payment)
+
+    if payment.status == "SUCCESS":
+        await do_orders_success(db, payment)
+
+    return
+
+
+async def payments_view(db: Session):
+    payments = db.query(Payment).order_by(Payment.id.desc())
+    return payments
 
 
 async def cashfree_view(db: Session):

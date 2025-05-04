@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Payment Confirmation</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f5f5;
+      padding: 0;
+      margin: 0;
+    }
+    .container {
+      max-width: 600px;
+      background-color: #fff;
+      margin: 30px auto;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      color: #333;
+    }
+    .header {
+      text-align: center;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e2e2e2;
+    }
+    .header h1 {
+      font-size: 26px;
+      color: #5f3c2b;
+      margin-bottom: 5px;
+    }
+    .confirmation-box {
+      background-color: #e6f4ea;
+      padding: 15px 25px;
+      font-size: 18px;
+      border-radius: 8px;
+      margin: 20px 0;
+      color: #2e7d32;
+      font-weight: bold;
+      text-align: center;
+    }
+    .details {
+      margin: 20px 0;
+      font-size: 15px;
+    }
+    .details p {
+      margin: 6px 0;
+    }
+    .product-list {
+      background-color: #f7f0eb;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 10px;
+      /* Bullets will now be shown */
+    }
+    .product-list li {
+      margin: 6px 0;
+      color: #5f3c2b;
+    }
+    .footer {
+      font-size: 13px;
+      color: #777;
+      text-align: center;
+      border-top: 1px solid #e2e2e2;
+      margin-top: 30px;
+      padding-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>AL Qudsiyah</h1>
+      <p>Payment Confirmation</p>
+    </div>
+
+    <p>Dear {{ customer_name }},</p>
+    <p>We have received your payment successfully. Thank you for shopping with <strong>AL Qudsiyah</strong>.</p>
+
+    <div class="confirmation-box">
+      Payment of ₹{{ amount }} received on {{ payment_date }}.
+    </div>
+
+    <div class="details">
+      <p><strong>Products Purchased:</strong></p>
+      <ul class="product-list">
+        {% for product_name in products %}
+          <li>{{ product_name }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <p>We are now preparing your order for shipment. You'll receive a tracking email once it's on the way.</p>
+
+    <p>Thank you for choosing <strong>AL Qudsiyah</strong> – where fragrance meets soul.</p>
+
+    <div class="footer">
+      &copy; {{ year }} AL Qudsiyah. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

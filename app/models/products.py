@@ -91,6 +91,7 @@ class Order(Base):
     address = Column(Text, nullable=True)
     total_amount = Column(Text, nullable=True)
     status = Column(String, default="PENDING", nullable=True)
+    delivery_status = Column(String, default="PENDING", nullable=True)
     created_on = Column(DateTime, default=datetime.now(), nullable=True)
 
     product = relationship("Product", back_populates="orders")
@@ -103,11 +104,22 @@ class Payment(Base):
     id = Column(Integer, primary_key=True)
     cart_id = Column(Integer, nullable=True)
     products = Column(String, nullable=True)
+    orders = Column(String, nullable=True)
     address = Column(Text, nullable=True)
     customer_phone = Column(String, nullable=True)
     amount_paid = Column(Integer, nullable=True)
+    payment_method = Column(String, nullable=True)
     paid_on = Column(DateTime, nullable=True)
     transaction_no = Column(String, nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     status = Column(String, default="PENDING", nullable=True)
     created_on = Column(DateTime, default=datetime.now(), nullable=True)
+
+    user = relationship("User", back_populates="payments")
+
+class PaymentWebhook(Base):
+    __tablename__ = "payment_webhook"
+
+    id = Column(Integer, primary_key=True)
+    data = Column(Text, nullable=True)
 
