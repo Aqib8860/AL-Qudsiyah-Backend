@@ -90,7 +90,7 @@ async def send_order_confirm_mail(payment, order, products_name):
         "year": year,
         "products": products
     }
-
+    print("Line 93")
     # Set up Jinja2 environment to load templates
     template_loader = FileSystemLoader("templates")
     env = Environment(loader=template_loader)
@@ -106,8 +106,9 @@ async def send_order_confirm_mail(payment, order, products_name):
         body=html,
         subtype=MessageType.html  # or plain if not using HTML
     )
-
+    print("Line 109")
     fm = FastMail(conf)
     await fm.send_message(message)
+    print("Line 112")
 
     return

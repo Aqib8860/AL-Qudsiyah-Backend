@@ -77,7 +77,7 @@ async def admin_products_list_view(db: Session, get_image: bool, name:str, categ
     if category:
         query = query.filter(Product.category == category)
 
-    products =  query.order_by(Product.id).options(selectinload(Product.images)).all()
+    products =  query.order_by(Product.id.desc()).options(selectinload(Product.images)).all()
 
     if get_image:
         return [await AdminProductsListBase.get_image_data(product) for product in products]
@@ -224,6 +224,23 @@ async def user_cart_view(db: Session, user: dict):
         "cart_id": cart.id,
         "products": products_data
     })
+
+
+# User cart items count
+async def user_cart_items_count(db: Session, user: dict):
+    cart = db.query(Cart).filter(Cart.user_id == user["id"]).first()
+    
+    if not cart:
+        db_cart = Cart(user_id=user["id"])
+        db.add(db_cart)
+        db.commit()
+        db.refresh(db_cart)    
+        cart = db.query(Cart).filter(Cart.user_id == user["id"]).first()
+    
+    product_count = len(cart.products) if cart.products else 0
+    
+    
+    return JSONResponse({"count": product_count}, status_code=200)
 
 
 async def add_to_cart_view(db: Session, user: dict, cart: AddToCartBase):
