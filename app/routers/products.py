@@ -265,3 +265,4 @@ async def add_product_rating(
     
     return await add_product_rating_view(db=db, user=user, data=data)
 
+
