@@ -206,3 +206,34 @@ class PaymentBase(BaseModel):
     status: str | None = None
     created_on: datetime | None = None
 
+
+class AddProductRatingReviewBase(BaseModel):
+    product_id: int
+    rating: float | None = 0
+    review: str | None = None
+
+
+class ProductRatingReviewBase(BaseModel):
+    id: int | None = None
+    product_id: int | None = None
+    rating: float | None = 0
+    review: str | None = None
+    username: dict | None = None
+    added_on: datetime | None = None
+    
+    class Config:
+        from_attributes = True
+    
+    @staticmethod
+    async def get_data(product):
+        if product and product.user_id:
+
+            return {
+            "id": product.id,
+            "product_id": product.product_id,
+            "username": f"{product.user.first_name} {product.user.last_name if product.user.last_name else ''}",
+            "rating": product.rating,
+            "review": product.reveiew,
+            "added_on": str(product.added_on)
+        }
+            

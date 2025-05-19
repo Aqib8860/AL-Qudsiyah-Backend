@@ -22,7 +22,7 @@ class User(Base):
     carts = relationship("Cart", back_populates="user", cascade="all, delete-orphan")
     orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
     payments = relationship("Payment", back_populates="user", cascade="all, delete-orphan")
-
+    rating_review = relationship("RatingReview", back_populates="user", cascade="all, delete-orphan")
 
 class UserOtp(Base):
     __tablename__ = "otp"

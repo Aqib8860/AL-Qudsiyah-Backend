@@ -20,6 +20,7 @@ class Product(Base):
     slug = Column(String, index=True, nullable=True)
     quantity = Column(Integer, default=0)
     unit = Column(String, nullable=True)
+    rating = Column(Float, default=0)
     in_stock = Column(Integer, default=0)
 
     # Add this line to fix the error
@@ -69,10 +70,13 @@ class RatingReview(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     rating = Column(Float, default=0)
     reveiew = Column(Text, nullable=True)
+    added_on = Column(DateTime, default=datetime.now(), nullable=True)
 
     product_rating_review = relationship("Product", back_populates="rating_review")
+    user = relationship("User", back_populates="rating_review")
 
 
 class Pincode(Base):

@@ -2,6 +2,7 @@ import io
 import os
 import requests
 from fastapi import UploadFile
+from typing import Dict
 from sqlalchemy.orm import selectinload
 from datetime import datetime
 from sqlalchemy.orm import Session
@@ -11,11 +12,11 @@ from dotenv import load_dotenv
 from .file_upload import upload_to_s3
 from .orders import do_orders_success
 
-from models.products import Product, ProductImage, Cart, ProductCartAssociation, Pincode, Order, Payment, PaymentWebhook
+from models.products import Product, ProductImage, Cart, ProductCartAssociation, Pincode, Order, Payment, PaymentWebhook, RatingReview
 
 from schemas.products import (
     ProductActionBase, AdminProductsListBase, ProductsListBase,  AddToCartBase, PincodeBase, OrderBase, CreateOrderBase, CheckoutBase,
-    UserOrderBase
+    UserOrderBase, AddProductRatingReviewBase, ProductRatingReviewBase
     )
 
 
@@ -499,3 +500,83 @@ async def cashfree_view(db: Session):
 
     return JSONResponse(response.json(), status_code=response.status_code)
 
+
+async def product_rating_review_view(db: Session, product_id: int):
+    # try:
+    product_ratings = db.query(RatingReview).filter(RatingReview.product_id == product_id).all()
+
+    if not product_ratings:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "average": 0,
+                "total_reviews": 0,
+                "breakdown": {5: 0, 4: 0, 3: 0, 2: 0, 1: 0},
+                "reviews": [],
+            },
+        )
+
+    if product_ratings:
+        # Calculate average rating
+        total_reviews = len(product_ratings)
+        total_score = sum([r.rating for r in product_ratings])
+        average_rating = total_score / total_reviews
+
+        # Rating breakdown
+        breakdown: Dict[int, int] = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0}
+        for r in product_ratings:
+            rating = int(round(r.rating))
+            if rating in breakdown:
+                breakdown[rating] += 1
+
+        # Format individual reviews
+        reviews = [await ProductRatingReviewBase.get_data(r) for r in product_ratings]
+        return JSONResponse(
+        status_code=200,
+        content={
+            "average": round(average_rating, 1),
+            "totalReviews": total_reviews,
+            "breakdown": breakdown,
+            "reviews": reviews,
+        },
+    )
+        # return [await ProductRatingReviewBase.get_data(rating) for rating in product_ratings]
+
+    # except Exception as e:
+    #     return JSONResponse({"error": str(e)}, status_code=400)
+
+
+async def add_product_rating_view(db: Session, user: dict, data: AddProductRatingReviewBase):
+    data = data.model_dump()
+    
+    product = db.query(Product).filter(Product.id == data['product_id']).first()
+    if not product:
+        return JSONResponse({"error": "Product not exists"}, status_code=404)
+    # Add data in table
+
+    product_rating = db.query(RatingReview).filter(
+        RatingReview.product_id == data["product_id"],
+        RatingReview.user_id == user["id"]
+    ).first()
+
+    if not product_rating:
+        product_rating = RatingReview(
+            product_id=data["product_id"],
+            user_id=user["id"],
+            rating=data["rating"],
+            reveiew=data["review"]
+        )
+
+        db.add(product_rating)
+        db.commit()    
+
+        return JSONResponse({"msg": "Success"})
+    
+    if data.get("rating", None):
+        product_rating.rating = data["rating"]
+
+    if data.get("review", None):
+        product_rating.reveiew = data["review"]
+
+    db.commit()
+    return JSONResponse({"msg": "Success"})

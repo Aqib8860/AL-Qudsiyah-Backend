@@ -5,14 +5,15 @@ from models.database import SessionLocal
 
 from schemas.products import (
     ProductActionBase, ProductBase, ProductImageBase, ProductCategoriesBase, AdminProductsListBase, ProductsListBase, ProductBase, ProductsDetailBase, UserCartBase, AddToCartBase, 
-    PincodeBase, OrderBase, CreateOrderBase, CheckoutBase, CashfreeWebhookBase, PaymentBase, UserOrderBase
+    PincodeBase, OrderBase, CreateOrderBase, CheckoutBase, CashfreeWebhookBase, PaymentBase, UserOrderBase, ProductRatingReviewBase, AddProductRatingReviewBase
     )
 
 from crud.auth import get_current_user
 from crud.products import (
     create_product, get_all_products, add_product_image_view, get_product_images_view, get_product_categories_view, delete_product_view,  update_product_view, delete_product_image_view,
     admin_products_list_view, get_product_view, user_cart_view, add_to_cart_view, delete_from_cart_view, add_pincode_view, pincodes_list_view, check_pincode_delivery_view, add_order_view,
-    checkout_view, cashfree_view, cashfree_webhook_view, payments_view, orders_list_view, user_orders_list_view, user_cart_items_count
+    checkout_view, cashfree_view, cashfree_webhook_view, payments_view, orders_list_view, user_orders_list_view, user_cart_items_count, add_product_rating_view, product_rating_review_view
+
 )
 
 
@@ -244,5 +245,23 @@ async def payments_list(
     return await payments_view(db=db)
 
 
+# -------------- Rating review ----------------------------------------
 
+# Products rating reviews
+@router.get("/product/rating-reviews/{product_id}/")
+async def product_rating_review(
+    product_id: int,
+    db: Session = Depends(get_db)
+):
+    return await product_rating_review_view(db=db, product_id=product_id)
+
+
+@router.post("/product/rating/")
+async def add_product_rating(
+    data: AddProductRatingReviewBase,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    
+    return await add_product_rating_view(db=db, user=user, data=data)
 
