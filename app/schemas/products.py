@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Dict, Any
 from datetime import datetime
-
+from crud.utils import get_order_payment_details
 
 class ProductBase(BaseModel):
     id: int | None = None
@@ -145,6 +145,10 @@ class PincodeBase(BaseModel):
     active: bool | None = False
 
 
+class UpdatePincodeBase(BaseModel):
+    active: bool
+
+
 class CreateOrderBase(BaseModel):
     id: int | None = None
     product_id: int | None = None
@@ -160,6 +164,87 @@ class OrderBase(BaseModel):
     user_id: int | None = None
     status: str | None = None
     created_on: datetime | None = None
+
+
+class AdminOrderBase(BaseModel):
+    id: int | None = None
+    product_id: int | None = None
+    product_name: str | None = None
+    image: str | None = None
+    address: str | None = None
+    total_amount: int | None = None
+    user_id: int | None = None
+    username: str | None = None
+    status: str | None = None
+    delivery_status: str | None = None
+    created_on: datetime | None = None
+
+    class Config:
+        from_attributes = True
+    
+    @classmethod
+    async def get_data(cls, order: Dict[str, Any]):
+        if order and order.product:
+            order.image = order.product.images[0].image_url if order.product.images else None
+            order.product_name = order.product.name if order.product else None
+            if order.user:
+                order.username = f"{order.user.first_name} {order.user.last_name} "
+
+        return order if order else None
+
+
+class AdminOrderDetailBase(BaseModel):
+    id: int | None = None
+    product_id: int | None = None
+    product_name: str | None = None
+    image: str | None = None
+    address: str | None = None
+    total_amount: int | None = None
+    user_id: int | None = None
+    username: str | None = None
+    status: str | None = None
+    delivery_status: str | None = None
+    created_on: datetime | None = None
+    payment_detail: dict | None = None
+
+    class Config:
+        from_attributes = True
+    
+    @classmethod
+    async def get_data(cls, order: Dict[str, Any], db):
+        if order and order.product:
+            order.image = order.product.images[0].image_url if order.product.images else None
+            order.product_name = order.product.name if order.product else None
+            if order.user:
+                order.username = f"{order.user.first_name} {order.user.last_name} "
+        
+                # Get Payment Details
+                order.payment_detail = await get_order_payment_details(db, order)
+
+        return order if order else None
+
+
+class LatestOrdersBase(BaseModel):
+    id: int | None = None
+    product_name: str | None = None
+    image: str | None = None
+    total_amount: int | None = None
+    username: str | None = None
+    status: str | None = None
+    created_on: datetime | None = None
+
+    class Config:
+        from_attributes = True
+    
+    @classmethod
+    async def get_data(cls, order: Dict[str, Any]):
+        if order and order.product:
+            order.image = order.product.images[0].image_url if order.product.images else None
+            order.product_name = order.product.name if order.product else None
+            if order.user:
+                order.username = f"{order.user.first_name} {order.user.last_name} "
+
+        return order if order else None
 
 
 class UserOrderBase(BaseModel):

@@ -1,6 +1,7 @@
 import random
 from datetime import datetime
 from models.users import UserOtp
+from models.products import Payment
 
 
 async def generate_otp(db, email):
@@ -31,4 +32,37 @@ def generate_name(name):
             first_name = name
     
     return first_name, last_name
+
+
+async def get_order_payment_details(db, order):
+    try:
+        # Get User All Payments
+        user_paments = db.query(Payment).filter(Payment.user_id == order.user_id)
+
+        payment_detail = None
+        
+        for payment in user_paments:
+            if payment.orders:
+                payment_orders = payment.orders.split(",")
+
+                if str(order.id) in payment_orders:
+                    payment_detail = payment
+        
+        if payment_detail:
+            return {
+                "id": payment_detail.id,
+                "order_ids": payment_detail.orders,
+                "address": payment_detail.address,
+                "customer_phone": payment_detail.customer_phone,
+                "amount_paid": payment_detail.amount_paid,
+                "payment_method": payment_detail.payment_method,
+                "paid_on": payment_detail.paid_on,
+                "transaction_no": payment_detail.transaction_no,
+                "status": payment_detail.status,
+                "created_on": payment_detail.created_on,
+            }
+
+        return payment_detail
+    except Exception as e:
+        return None
 
