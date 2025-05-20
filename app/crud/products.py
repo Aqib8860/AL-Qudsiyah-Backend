@@ -16,7 +16,8 @@ from models.products import Product, ProductImage, Cart, ProductCartAssociation,
 
 from schemas.products import (
     ProductActionBase, AdminProductsListBase, ProductsListBase,  AddToCartBase, PincodeBase, OrderBase, CreateOrderBase, CheckoutBase,
-    UserOrderBase, AddProductRatingReviewBase, ProductRatingReviewBase
+    UserOrderBase, AddProductRatingReviewBase, ProductRatingReviewBase, AdminOrderBase, AdminOrderDetailBase, LatestOrdersBase, 
+    UpdatePincodeBase
     )
 
 
@@ -310,6 +311,23 @@ async def add_pincode_view(db: Session, user: dict, pincode_data: PincodeBase):
         return JSONResponse({"error": str(e)}, status_code=400)
 
 
+# Update Pincode
+async def update_pincode_view(db: Session, pincode_id:int, pincode_data: UpdatePincodeBase):
+    try:
+        pincode_obj = db.query(Pincode).filter(Pincode.id == pincode_id).first()
+        if not pincode_obj:
+            return JSONResponse({"msg": "Pincode not found"}, status_code=404)
+
+        pincode_obj.active = pincode_data.active
+        db.commit()
+        db.refresh(pincode_obj)
+
+        return JSONResponse({"msg": "Pincode updated successfully"})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+    
+
+# Pincodes List
 async def pincodes_list_view(db: Session, user: dict):
     pincodes = db.query(Pincode)
     return pincodes
@@ -318,6 +336,7 @@ async def pincodes_list_view(db: Session, user: dict):
 async def check_pincode_delivery_view(db: Session, pincode: str):
     availabilty = db.query(Pincode).filter(Pincode.pincode == pincode, Pincode.active == True).first()
     return JSONResponse({"available": True if availabilty else False})
+
 
 # Orders List -------------------------------------------------------------
 async def user_orders_list_view(db: Session, user: dict):
@@ -329,10 +348,40 @@ async def user_orders_list_view(db: Session, user: dict):
 
 
 async def orders_list_view(db: Session):
-    orders = db.query(Order)
+    orders = db.query(Order).order_by(Order.created_on.desc())
     if orders:
-        return orders
+        return [await AdminOrderBase.get_data(order) for order in orders]
 
+    return JSONResponse([])
+
+
+# Get Order Details for admin
+async def admin_order_detail_view(db: Session, order_id: int):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        return JSONResponse({"error": "Order not exists"}, status_code=404)
+    
+    return await AdminOrderDetailBase.get_data(order, db)
+
+
+# Get Order Counts
+async def admin_orders_count_view(db: Session):
+    try:
+        return JSONResponse({
+            "total_orders": db.query(Order).count(),
+            "pending_orders": db.query(Order).filter(Order.status == "PENDING").count(),
+            "success_orders": db.query(Order).filter(Order.status == "SUCCESS").count(),
+            "delivery_pending": db.query(Order).filter(Order.delivery_status == "PENDING").count(),
+            "delivery_success": db.query(Order).filter(Order.delivery_status == "SUCCESS").count(),
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+
+async def admin_latest_orders_view(db: Session, status: str):
+    orders = db.query(Order).filter(Order.status == status).order_by(Order.created_on.desc()).limit(5)
+    if orders:
+        return [await LatestOrdersBase.get_data(order) for order in orders]
     return JSONResponse([])
 
 

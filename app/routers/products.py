@@ -5,15 +5,16 @@ from models.database import SessionLocal
 
 from schemas.products import (
     ProductActionBase, ProductBase, ProductImageBase, ProductCategoriesBase, AdminProductsListBase, ProductsListBase, ProductBase, ProductsDetailBase, UserCartBase, AddToCartBase, 
-    PincodeBase, OrderBase, CreateOrderBase, CheckoutBase, CashfreeWebhookBase, PaymentBase, UserOrderBase, ProductRatingReviewBase, AddProductRatingReviewBase
-    )
+    PincodeBase, OrderBase, CreateOrderBase, CheckoutBase, CashfreeWebhookBase, PaymentBase, UserOrderBase, ProductRatingReviewBase, AddProductRatingReviewBase, AdminOrderBase, 
+    AdminOrderDetailBase, LatestOrdersBase, UpdatePincodeBase
+)
 
 from crud.auth import get_current_user
 from crud.products import (
     create_product, get_all_products, add_product_image_view, get_product_images_view, get_product_categories_view, delete_product_view,  update_product_view, delete_product_image_view,
     admin_products_list_view, get_product_view, user_cart_view, add_to_cart_view, delete_from_cart_view, add_pincode_view, pincodes_list_view, check_pincode_delivery_view, add_order_view,
-    checkout_view, cashfree_view, cashfree_webhook_view, payments_view, orders_list_view, user_orders_list_view, user_cart_items_count, add_product_rating_view, product_rating_review_view
-
+    checkout_view, cashfree_view, cashfree_webhook_view, payments_view, orders_list_view, user_orders_list_view, user_cart_items_count, add_product_rating_view, product_rating_review_view,
+    admin_order_detail_view, admin_orders_count_view, admin_latest_orders_view, update_pincode_view
 )
 
 
@@ -158,7 +159,7 @@ async def delete_from_cart(
 
 # ========================================================================================================
 
-# Pincode
+# Add Pincode
 @router.post("/admin/pincode/", response_model=PincodeBase)
 async def add_pincode(
     pincode_data: PincodeBase,
@@ -166,6 +167,17 @@ async def add_pincode(
     db: Session = Depends(get_db)
 ):
     return await add_pincode_view(db=db, user=user, pincode_data=pincode_data)
+
+
+# Update Pincode
+@router.patch("/admin/pincode/{pincode_id}/")
+async def update_pincode(
+    pincode_id: int,
+    pincode_data: UpdatePincodeBase,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return await update_pincode_view(db=db, pincode_id=pincode_id, pincode_data=pincode_data)
 
 
 @router.get("/admin/pincodes/", response_model=list[PincodeBase])
@@ -203,13 +215,40 @@ async def add_order(
     return await add_order_view(db=db, order=order, user=user)
 
 
-@router.get("/admin/orders/", response_model=list[OrderBase])
+@router.get("/admin/orders/", response_model=list[AdminOrderBase])
 async def orders_list(
+    status: str | None = None,
+    delivery_status: str | None = None,
     user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     return await orders_list_view(db=db)
 
+
+@router.get("/admin/orders/{order_id}", response_model=AdminOrderDetailBase)
+async def admin_order_detail(
+    order_id: int,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return await admin_order_detail_view(db=db, order_id=order_id)
+
+
+@router.get("/admin/orders/count/")
+async def admin_orders_count(
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return await admin_orders_count_view(db=db)
+
+
+@router.get("/admin/orders/latest/", response_model=list[LatestOrdersBase])
+async def admin_latest_orders(
+    status: str | None = None,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return await admin_latest_orders_view(db=db, status=status)
 
 # Checkout ----------------------------------------------
 @router.post("/user/checkout/")
