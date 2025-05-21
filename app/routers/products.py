@@ -226,7 +226,7 @@ async def orders_list(
 
 
 
-@router.get("/admin/orders/{order_id}/", response_model=AdminOrderDetailBase)
+@router.get("/admin/order/{order_id}/", response_model=AdminOrderDetailBase)
 async def admin_order_detail(
     order_id: int,
     user: dict = Depends(get_current_user),
