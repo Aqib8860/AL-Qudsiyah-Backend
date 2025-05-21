@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Text, ForeignKey, Float, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, Text, ForeignKey, Float, DateTime, Date
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -128,3 +128,19 @@ class PaymentWebhook(Base):
     id = Column(Integer, primary_key=True)
     data = Column(Text, nullable=True)
 
+
+class Promocode(Base):
+    __tablename__ = "promocode"
+
+    id = Column(Integer, primary_key=True)
+    promocode = Column(String, nullable=True)
+    products = Column(String, nullable=True, default="ALL")
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    discount_type = Column(String, nullable=True, default="PERCENTAGE")
+    amount = Column(Integer, nullable=True, default=0)
+    available = Column(Boolean, default=False)
+    quantity = Column(Integer, default=0)
+    expired_on = Column(Date, nullable=True)
+    created_on = Column(DateTime, default=datetime.now(), nullable=True)
+
+    user = relationship("User", back_populates="promocodes")

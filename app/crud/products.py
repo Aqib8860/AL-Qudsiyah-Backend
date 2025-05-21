@@ -12,13 +12,15 @@ from dotenv import load_dotenv
 from .file_upload import upload_to_s3
 from .orders import do_orders_success
 
-from models.products import Product, ProductImage, Cart, ProductCartAssociation, Pincode, Order, Payment, PaymentWebhook, RatingReview
+from models.products import (
+    Product, ProductImage, Cart, ProductCartAssociation, Pincode, Order, Payment, PaymentWebhook, RatingReview, Promocode
+    )
 
 from schemas.products import (
     ProductActionBase, AdminProductsListBase, ProductsListBase,  AddToCartBase, PincodeBase, OrderBase, CreateOrderBase, CheckoutBase,
     UserOrderBase, AddProductRatingReviewBase, ProductRatingReviewBase, AdminOrderBase, AdminOrderDetailBase, LatestOrdersBase, 
-    UpdatePincodeBase
-    )
+    UpdatePincodeBase, PromocodeActionBase, PromocodeBase
+)
 
 
 load_dotenv()
@@ -596,36 +598,126 @@ async def product_rating_review_view(db: Session, product_id: int):
 
 
 async def add_product_rating_view(db: Session, user: dict, data: AddProductRatingReviewBase):
-    data = data.model_dump()
+    try:
+        data = data.model_dump()
+        
+        product = db.query(Product).filter(Product.id == data['product_id']).first()
+        if not product:
+            return JSONResponse({"error": "Product not exists"}, status_code=404)
+        # Add data in table
+
+        product_rating = db.query(RatingReview).filter(
+            RatingReview.product_id == data["product_id"],
+            RatingReview.user_id == user["id"]
+        ).first()
+
+        if not product_rating:
+            product_rating = RatingReview(
+                product_id=data["product_id"],
+                user_id=user["id"],
+                rating=data["rating"],
+                reveiew=data["review"]
+            )
+
+            db.add(product_rating)
+            db.commit()    
+
+            return JSONResponse({"msg": "Success"})
+        
+        if data.get("rating", None):
+            product_rating.rating = data["rating"]
+
+        if data.get("review", None):
+            product_rating.reveiew = data["review"]
+
+        db.commit()
+        return JSONResponse({"msg": "Success"})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
     
-    product = db.query(Product).filter(Product.id == data['product_id']).first()
-    if not product:
-        return JSONResponse({"error": "Product not exists"}, status_code=404)
-    # Add data in table
 
-    product_rating = db.query(RatingReview).filter(
-        RatingReview.product_id == data["product_id"],
-        RatingReview.user_id == user["id"]
-    ).first()
+# Promocodes List
+async def promocodes_list_view(db: Session):
+    promocodes = db.query(Promocode).order_by(Promocode.created_on.desc()).all()
+    if promocodes:
+        return [await PromocodeBase.get_data(promocode) for promocode in promocodes]
+    return JSONResponse([])
 
-    if not product_rating:
-        product_rating = RatingReview(
-            product_id=data["product_id"],
-            user_id=user["id"],
-            rating=data["rating"],
-            reveiew=data["review"]
+
+# Add Promocode
+async def add_promocode_view(db: Session, user: dict, promocode: PromocodeActionBase):
+    try:
+        promocode_data = promocode.model_dump()
+
+        promocode = db.query(Promocode).filter(Promocode.promocode == promocode_data["promocode"]).first()
+        if promocode:
+            return JSONResponse({"error": "Promocode already exists"}, status_code=400)
+
+        db_promocode = Promocode(
+            promocode=promocode_data["promocode"],
+            created_by=user["id"],
+            amount=promocode_data["amount"],
+            available=promocode_data["available"],
+            quantity=promocode_data["quantity"],
+            expired_on=promocode_data["expired_on"]
         )
 
-        db.add(product_rating)
-        db.commit()    
+        db.add(db_promocode)
+        db.commit()
 
         return JSONResponse({"msg": "Success"})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
     
-    if data.get("rating", None):
-        product_rating.rating = data["rating"]
+    
+# Update Promocode
+async def update_promocode_view(db: Session, promocode_id: int, promocode: PromocodeActionBase):
+    try:
+        promocode_data = promocode.model_dump(exclude_unset=True)
 
-    if data.get("review", None):
-        product_rating.reveiew = data["review"]
+        db_promocode = db.query(Promocode).filter(Promocode.id == promocode_id).first()
 
-    db.commit()
-    return JSONResponse({"msg": "Success"})
+        if not db_promocode:
+            return JSONResponse({"error": "Promocode not found"}, status_code=404)
+
+        for key, value in promocode_data.items():
+            setattr(db_promocode, key, value)
+
+        db.commit()
+        db.refresh(db_promocode)
+
+        return JSONResponse({"msg": "Promocode updated successfully"})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+    
+
+# Apply Promocode
+async def apply_promocode_view(db: Session, promocode: str):
+    try:
+        promocode = db.query(Promocode).filter(Promocode.promocode == promocode).first()
+
+        if not promocode:
+            return JSONResponse({"message": "Invalid Promocode"}, status_code=400)
+        
+        if promocode.expired_on < datetime.now().date():
+            return JSONResponse({"message": "Promocode expired"}, status_code=400)
+
+        if not promocode.available or promocode.quantity <= 0:
+            return JSONResponse({"message": "Promocode not available"}, status_code=400)
+
+        return JSONResponse({"message": "Promocode Applied"})
+    
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+
+# Get Promocode
+async def get_promocode_view(db: Session, promocode: str):
+    promocode = db.query(Promocode).filter(Promocode.promocode == promocode).first()
+    
+    if not promocode:
+        return JSONResponse({"message": "Invalid Promocode"}, status_code=400)
+
+    return promocode
+
