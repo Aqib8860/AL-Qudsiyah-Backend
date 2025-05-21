@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Dict, Any
-from datetime import datetime
+from datetime import datetime, date
 from crud.utils import get_order_payment_details
 
 class ProductBase(BaseModel):
@@ -322,3 +322,36 @@ class ProductRatingReviewBase(BaseModel):
             "added_on": str(product.added_on)
         }
             
+
+class PromocodeActionBase(BaseModel):
+    promocode: str | None = None
+    products: str | None = None
+    discount_type: str | None = None
+    amount: int | None = None
+    available: bool | None = None
+    quantity: int | None = None
+    expired_on: datetime | None = None
+
+
+class PromocodeBase(BaseModel):
+    id: int | None = None
+    promocode: str | None = None
+    products: str | None = None
+    discount_type: str | None = None
+    created_by: int | None = None
+    created_by_name: str | None = None
+    amount: int | None = None
+    available: bool | None = None
+    quantity: int | None = None
+    expired_on: date | None = None
+    created_on: datetime | None = None
+
+    class Config:
+        from_attributes = True
+    
+    @classmethod
+    async def get_data(cls, promocode: Dict[str, Any]):
+        if promocode and promocode.created_by:
+            promocode.created_by_name = f"{promocode.user.first_name} {promocode.user.last_name}"
+        return promocode if promocode else None
+

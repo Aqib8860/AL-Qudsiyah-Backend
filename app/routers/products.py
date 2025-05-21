@@ -6,7 +6,7 @@ from models.database import SessionLocal
 from schemas.products import (
     ProductActionBase, ProductBase, ProductImageBase, ProductCategoriesBase, AdminProductsListBase, ProductsListBase, ProductBase, ProductsDetailBase, UserCartBase, AddToCartBase, 
     PincodeBase, OrderBase, CreateOrderBase, CheckoutBase, CashfreeWebhookBase, PaymentBase, UserOrderBase, ProductRatingReviewBase, AddProductRatingReviewBase, AdminOrderBase, 
-    AdminOrderDetailBase, LatestOrdersBase, UpdatePincodeBase
+    AdminOrderDetailBase, LatestOrdersBase, UpdatePincodeBase, PromocodeBase, PromocodeActionBase
 )
 
 from crud.auth import get_current_user
@@ -14,7 +14,8 @@ from crud.products import (
     create_product, get_all_products, add_product_image_view, get_product_images_view, get_product_categories_view, delete_product_view,  update_product_view, delete_product_image_view,
     admin_products_list_view, get_product_view, user_cart_view, add_to_cart_view, delete_from_cart_view, add_pincode_view, pincodes_list_view, check_pincode_delivery_view, add_order_view,
     checkout_view, cashfree_view, cashfree_webhook_view, payments_view, orders_list_view, user_orders_list_view, user_cart_items_count, add_product_rating_view, product_rating_review_view,
-    admin_order_detail_view, admin_orders_count_view, admin_latest_orders_view, update_pincode_view
+    admin_order_detail_view, admin_orders_count_view, admin_latest_orders_view, update_pincode_view, add_promocode_view, promocodes_list_view, apply_promocode_view, update_promocode_view,
+    get_promocode_view
 )
 
 
@@ -306,3 +307,49 @@ async def add_product_rating(
     return await add_product_rating_view(db=db, user=user, data=data)
 
 
+# Promocode -------------------------------------------------------------
+@router.post("/admin/promocode/")
+async def add_promocode(
+    promocode: PromocodeActionBase,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    
+    return await add_promocode_view(db=db, user=user, promocode=promocode)
+
+
+@router.patch("/admin/promocode/{promocode_id}/")
+async def update_promocode(
+    promocode_id: int,
+    promocode: PromocodeActionBase,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    
+    return await update_promocode_view(db=db, promocode_id=promocode_id, promocode=promocode)
+
+
+@router.get("/admin/promocodes", response_model=list[PromocodeBase])
+async def promocodes_list(
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return await promocodes_list_view(db=db)
+
+
+# Apply Promocode
+@router.get("/apply-promocode/{promocode}")
+async def apply_promocode(
+    promocode: str,
+    db: Session = Depends(get_db)
+):
+    return await apply_promocode_view(db=db, promocode=promocode)
+
+
+# Get Promocode
+@router.get("/promocode/{promocode}", response_model=PromocodeBase)
+async def get_promocode(
+    promocode: str,
+    db: Session = Depends(get_db)
+):
+    return await get_promocode_view(db=db, promocode=promocode)
