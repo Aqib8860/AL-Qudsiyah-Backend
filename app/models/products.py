@@ -1,9 +1,11 @@
+import pytz
 from sqlalchemy import Column, Integer, String, Boolean, Text, ForeignKey, Float, DateTime, Date
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from .database import Base
 
+IST = pytz.timezone("Asia/Kolkata")
 
 
 class Product(Base):
@@ -86,7 +88,7 @@ class Pincode(Base):
     pincode = Column(String, index=True, nullable=True)
     active = Column(Boolean, default=False)
 
-import pytz
+
 
 class Order(Base):
     __tablename__ = "orders"
@@ -98,7 +100,7 @@ class Order(Base):
     total_amount = Column(Text, nullable=True)
     status = Column(String, default="PENDING", nullable=True)
     delivery_status = Column(String, default="PENDING", nullable=True)
-    created_on = Column(DateTime, default=datetime.now(pytz.timezone("Asia/Kolkata")), nullable=True)
+    created_on = Column(DateTime, default=datetime.now(IST), nullable=True)
 
     product = relationship("Product", back_populates="orders")
     user = relationship("User", back_populates="orders")
@@ -120,7 +122,7 @@ class Payment(Base):
     transaction_no = Column(String, nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     status = Column(String, default="PENDING", nullable=True)
-    created_on = Column(DateTime, default=datetime.now(), nullable=True)
+    created_on = Column(DateTime, default=datetime.now(IST), nullable=True)
 
     user = relationship("User", back_populates="payments")
 
@@ -143,6 +145,6 @@ class Promocode(Base):
     available = Column(Boolean, default=False)
     quantity = Column(Integer, default=0)
     expired_on = Column(Date, nullable=True)
-    created_on = Column(DateTime, default=datetime.now(), nullable=True)
+    created_on = Column(DateTime, default=datetime.now(IST), nullable=True)
 
     user = relationship("User", back_populates="promocodes")

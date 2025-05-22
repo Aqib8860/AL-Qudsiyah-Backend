@@ -1,3 +1,4 @@
+import pytz
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -16,7 +17,7 @@ class User(Base):
     number = Column(String, index=True, nullable=True)
     is_active = Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.now())
+    created_at = Column(DateTime, default=datetime.now(pytz.timezone("Asia/Kolkata")))
     last_login = Column(DateTime, nullable=True)
 
     carts = relationship("Cart", back_populates="user", cascade="all, delete-orphan")
