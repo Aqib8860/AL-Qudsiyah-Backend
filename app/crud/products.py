@@ -651,7 +651,7 @@ async def add_promocode_view(db: Session, user: dict, promocode: PromocodeAction
 
         promocode = db.query(Promocode).filter(Promocode.promocode == promocode_data["promocode"]).first()
         if promocode:
-            return JSONResponse({"error": "Promocode already exists"}, status_code=400)
+            return JSONResponse({"message": "Promocode already exists"}, status_code=400)
 
         db_promocode = Promocode(
             promocode=promocode_data["promocode"],
@@ -665,7 +665,7 @@ async def add_promocode_view(db: Session, user: dict, promocode: PromocodeAction
         db.add(db_promocode)
         db.commit()
 
-        return JSONResponse({"msg": "Success"})
+        return JSONResponse({"message": "Success"})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=400)
     
@@ -678,7 +678,18 @@ async def update_promocode_view(db: Session, promocode_id: int, promocode: Promo
         db_promocode = db.query(Promocode).filter(Promocode.id == promocode_id).first()
 
         if not db_promocode:
-            return JSONResponse({"error": "Promocode not found"}, status_code=404)
+            return JSONResponse({"message": "Promocode not found"}, status_code=404)
+        
+        # Check if the promocode name is being updated to a name that already exists
+        if "promocode" in promocode_data:
+            existing = (
+                db.query(Promocode)
+                .filter(Promocode.promocode == promocode_data["promocode"], Promocode.id != promocode_id)
+                .first()
+            )
+            if existing:
+                return JSONResponse({"message": "Promocode with this name already exists"}, status_code=400)
+
 
         for key, value in promocode_data.items():
             setattr(db_promocode, key, value)
@@ -686,7 +697,7 @@ async def update_promocode_view(db: Session, promocode_id: int, promocode: Promo
         db.commit()
         db.refresh(db_promocode)
 
-        return JSONResponse({"msg": "Promocode updated successfully"})
+        return JSONResponse({"message": "Promocode updated successfully"})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=400)
 
@@ -721,3 +732,19 @@ async def get_promocode_view(db: Session, promocode: str):
 
     return promocode
 
+
+# Delete Promocode
+async def delete_promocode_view(db: Session, promocode_id: int):
+    try:
+        db_promocode = db.query(Promocode).filter(Promocode.id == promocode_id).first()
+
+        if not db_promocode:
+            return JSONResponse({"messgae": "Promocode not found"}, status_code=404)
+
+        db.delete(db_promocode)
+        db.commit()
+
+        return JSONResponse({"message": "Promocode deleted successfully"}, status_code=200)
+
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
