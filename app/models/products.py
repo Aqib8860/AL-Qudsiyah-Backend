@@ -110,6 +110,7 @@ class Payment(Base):
     cart_id = Column(Integer, nullable=True)
     products = Column(String, nullable=True)
     orders = Column(String, nullable=True)
+    promocode = Column(String, nullable=True)
     address = Column(Text, nullable=True)
     customer_phone = Column(String, nullable=True)
     amount_paid = Column(Integer, nullable=True)

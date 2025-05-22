@@ -350,7 +350,7 @@ async def user_orders_list_view(db: Session, user: dict):
 
 
 async def orders_list_view(db: Session):
-    orders = db.query(Order).order_by(Order.created_on.desc())
+    orders = db.query(Order).order_by(Order.id.desc())
     if orders:
         return [await AdminOrderBase.get_data(order) for order in orders]
 
@@ -408,6 +408,7 @@ async def add_order_view(db: Session, order: CreateOrderBase, user: dict):
 
 
 async def checkout_view(db: Session, user: dict, checkout_data: CheckoutBase):
+    print("Checkout data ", checkout_data)
     # Get user cart
     cart = db.query(Cart).filter(Cart.user_id == user['id']).first()
     if not cart:
@@ -417,6 +418,23 @@ async def checkout_view(db: Session, user: dict, checkout_data: CheckoutBase):
     if not cart.products:
         return JSONResponse({"error": "Cart is empty"}, status_code=400)
     
+    # Check if promocode used
+    promocode_discount_percentage = 0
+    if checkout_data.promocode:
+        promocode = db.query(Promocode).filter(Promocode.promocode == checkout_data.promocode).first()
+
+        # Check promocode validity
+        if promocode.expired_on < datetime.now().date():
+            return JSONResponse({"message": "Promocode expired"}, status_code=400)
+        
+        if promocode.quantity <= 0 or not promocode.available: 
+            return JSONResponse({"message": "Promocode is not available"}, status_code=400)
+        
+        promocode.quantity = promocode.quantity - 1
+        promocode_discount_percentage = promocode.amount
+        db.commit()
+
+        
     total_amount = 0
     orders = ""
 
@@ -440,10 +458,18 @@ async def checkout_view(db: Session, user: dict, checkout_data: CheckoutBase):
         else:
             orders += f"{db_order.id}"
 
+    # If promocode applied then less the amount
+    if promocode_discount_percentage:
+        discount_amount = (total_amount * promocode_discount_percentage) / 100
+        print("Discount amt ", discount_amount)
+        total_amount = total_amount - discount_amount
+
+    print("Total amount ", total_amount)
     # Add Payment
     db_payment = Payment(
         amount_paid=total_amount, orders=orders, address=checkout_data.address, 
-        customer_phone=checkout_data.customer_phone, user_id= user['id']
+        customer_phone=checkout_data.customer_phone, user_id= user['id'], 
+        promocode=checkout_data.promocode
     )
 
     db.add(db_payment)

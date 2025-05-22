@@ -270,6 +270,7 @@ class UserOrderBase(BaseModel):
 
 
 class CheckoutBase(BaseModel):
+    promocode: str | None = None
     customer_phone: str
     address: str
     
