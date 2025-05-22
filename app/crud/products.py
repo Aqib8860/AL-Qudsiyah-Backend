@@ -342,7 +342,7 @@ async def check_pincode_delivery_view(db: Session, pincode: str):
 
 # Orders List -------------------------------------------------------------
 async def user_orders_list_view(db: Session, user: dict):
-    orders = db.query(Order).filter(Order.user_id == user["id"]).order_by(Order.created_on.desc())
+    orders = db.query(Order).filter(Order.user_id == user["id"]).order_by(Order.id.desc())
     if orders:
         return [await UserOrderBase.get_image_data(order) for order in orders]
 
@@ -461,10 +461,8 @@ async def checkout_view(db: Session, user: dict, checkout_data: CheckoutBase):
     # If promocode applied then less the amount
     if promocode_discount_percentage:
         discount_amount = (total_amount * promocode_discount_percentage) / 100
-        print("Discount amt ", discount_amount)
         total_amount = total_amount - discount_amount
 
-    print("Total amount ", total_amount)
     # Add Payment
     db_payment = Payment(
         amount_paid=total_amount, orders=orders, address=checkout_data.address, 
