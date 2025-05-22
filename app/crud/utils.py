@@ -56,6 +56,7 @@ async def get_order_payment_details(db, order):
                 "customer_phone": payment_detail.customer_phone,
                 "amount_paid": payment_detail.amount_paid,
                 "payment_method": payment_detail.payment_method,
+                "promocode": payment_detail.promocode,
                 "paid_on": payment_detail.paid_on,
                 "transaction_no": payment_detail.transaction_no,
                 "status": payment_detail.status,
