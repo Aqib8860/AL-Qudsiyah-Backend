@@ -86,6 +86,7 @@ class Pincode(Base):
     pincode = Column(String, index=True, nullable=True)
     active = Column(Boolean, default=False)
 
+import pytz
 
 class Order(Base):
     __tablename__ = "orders"
@@ -97,7 +98,7 @@ class Order(Base):
     total_amount = Column(Text, nullable=True)
     status = Column(String, default="PENDING", nullable=True)
     delivery_status = Column(String, default="PENDING", nullable=True)
-    created_on = Column(DateTime, default=datetime.now(), nullable=True)
+    created_on = Column(DateTime, default=datetime.now(pytz.timezone("Asia/Kolkata")), nullable=True)
 
     product = relationship("Product", back_populates="orders")
     user = relationship("User", back_populates="orders")
