@@ -72,6 +72,13 @@ async def get_product_view(db: Session, product_id: int):
     return product
 
 
+async def get_product_category_view(db: Session, product_id: int):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        return JSONResponse(status_code=404, content={"detail": "Product not found"})
+    return JSONResponse({"category": product.category})
+
+
 async def admin_products_list_view(db: Session, get_image: bool, name:str, category:str):
     query = db.query(Product)
     
