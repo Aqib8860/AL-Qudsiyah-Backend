@@ -148,3 +148,13 @@ class Promocode(Base):
     created_on = Column(DateTime, default=datetime.now(IST), nullable=True)
 
     user = relationship("User", back_populates="promocodes")
+
+
+class PageSection(Base):
+    __tablename__ = "pagesection"
+    id = Column(Integer, primary_key=True)
+    page_url = Column(String, nullable=True)
+    name = Column(String, nullable=True)
+    image_url = Column(String, nullable=True)
+
+    

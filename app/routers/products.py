@@ -6,7 +6,7 @@ from models.database import SessionLocal
 from schemas.products import (
     ProductActionBase, ProductBase, ProductImageBase, ProductCategoriesBase, AdminProductsListBase, ProductsListBase, ProductBase, ProductsDetailBase, UserCartBase, AddToCartBase, 
     PincodeBase, OrderBase, CreateOrderBase, CheckoutBase, CashfreeWebhookBase, PaymentBase, UserOrderBase, ProductRatingReviewBase, AddProductRatingReviewBase, AdminOrderBase, 
-    AdminOrderDetailBase, LatestOrdersBase, UpdatePincodeBase, PromocodeBase, PromocodeActionBase
+    AdminOrderDetailBase, LatestOrdersBase, UpdatePincodeBase, PromocodeBase, PromocodeActionBase, PageSectionBase
 )
 
 from crud.auth import get_current_user
@@ -15,7 +15,7 @@ from crud.products import (
     admin_products_list_view, get_product_view, user_cart_view, add_to_cart_view, delete_from_cart_view, add_pincode_view, pincodes_list_view, check_pincode_delivery_view, add_order_view,
     checkout_view, cashfree_view, cashfree_webhook_view, payments_view, orders_list_view, user_orders_list_view, user_cart_items_count, add_product_rating_view, product_rating_review_view,
     admin_order_detail_view, admin_orders_count_view, admin_latest_orders_view, update_pincode_view, add_promocode_view, promocodes_list_view, apply_promocode_view, update_promocode_view,
-    get_promocode_view, delete_promocode_view, get_product_category_view
+    get_promocode_view, delete_promocode_view, get_product_category_view, add_page_section_view, get_page_section_view, update_page_section_view
 )
 
 
@@ -373,3 +373,33 @@ async def delete_promocode(
 ):
     return await delete_promocode_view(db=db, promocode_id=promocode_id)
 
+
+# Add Page Section -----------------------------------------------------------------
+@router.post("/admin/page-section/", response_model=PageSectionBase)
+async def add_pagesection_data(
+    page_url: str = Form(),
+    name: str = Form(),
+    image: UploadFile = Form(),
+    db: Session = Depends(get_db)
+):
+    return await add_page_section_view(db, page_url, name, image)
+
+
+@router.get("/page-section", response_model=list[PageSectionBase])
+async def get_pagesection(
+    page_url: str | None = None,
+    name: str | None = None,
+    db: Session = Depends(get_db)
+):
+    return await get_page_section_view(db, page_url, name)
+
+
+@router.patch("/admin/page-section/{pagesection_id}/", response_model=PageSectionBase)
+async def update_pagesection_data(
+    pagesection_id: int,
+    page_url: str | None = Form(),
+    name: str | None = Form(),
+    image: UploadFile | None = Form(),
+    db: Session = Depends(get_db)
+):
+    return await update_page_section_view(db, pagesection_id, page_url, name, image)

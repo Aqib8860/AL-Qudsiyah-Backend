@@ -19,7 +19,7 @@ def upload_to_s3(file, file_name, content_type):
     file_url = file_url.replace(" ", "")
 
     s3 = boto3.client('s3', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
-    print("url ", file_url)
+
     try:
 
         s3.upload_fileobj(file, bucket_name, file_url,
