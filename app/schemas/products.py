@@ -356,3 +356,9 @@ class PromocodeBase(BaseModel):
             promocode.created_by_name = f"{promocode.user.first_name} {promocode.user.last_name}"
         return promocode if promocode else None
 
+
+class PageSectionBase(BaseModel):
+    id: int | None = None
+    page_url: str | None = None
+    name: str | None = None
+    image_url: str | None = None

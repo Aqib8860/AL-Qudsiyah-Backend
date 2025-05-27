@@ -13,7 +13,7 @@ from .file_upload import upload_to_s3
 from .orders import do_orders_success
 
 from models.products import (
-    Product, ProductImage, Cart, ProductCartAssociation, Pincode, Order, Payment, PaymentWebhook, RatingReview, Promocode
+    Product, ProductImage, Cart, ProductCartAssociation, Pincode, Order, Payment, PaymentWebhook, RatingReview, Promocode, PageSection
     )
 
 from schemas.products import (
@@ -779,3 +779,85 @@ async def delete_promocode_view(db: Session, promocode_id: int):
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=400)
+
+
+# Page Section -------------------------------------
+async def get_page_section_view(db, page_url, name):
+    query = db.query(PageSection)
+
+    if page_url:
+        query = query.filter(PageSection.page_url == page_url)
+
+    if name:
+        query = query.filter(PageSection.name == name)
+
+    return query.all()
+
+
+async def add_page_section_view(db, page_url, name, image):
+    try: 
+        page_section_exists = db.query(PageSection).filter(PageSection.name == name).first()
+        if page_section_exists:
+            return JSONResponse({"message": "Name already exists"}, status_code=400)
+        
+        current_time = datetime.now()
+        timestamp = datetime.timestamp(current_time)
+
+        image_url = f"page-section/{int(timestamp)}_{image.filename}"
+
+        file_content = await image.read()
+        
+        file_obj = io.BytesIO(file_content)
+
+        file_aws_url = upload_to_s3(file_obj, image_url, image.content_type)
+        
+        db_page_section = PageSection(
+            page_url=page_url, name=name, image_url=file_aws_url
+        )
+        
+        db.add(db_page_section)
+        db.commit()
+        db.refresh(db_page_section)
+        
+        return JSONResponse({"message": "Page Section Created"}, status_code=200)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+    
+
+# Update Page Section
+async def update_page_section_view(db, pagesection_id, page_url, name, image):
+    try:
+        # Get existing section
+        page_section = db.query(PageSection).filter(PageSection.id == pagesection_id).first()
+        if not page_section:
+            return JSONResponse({"message": "Page section not found"}, status_code=404)
+
+        # Check if name is changing and already exists
+        # if name and name != page_section.name:
+        #     existing = db.query(PageSection).filter(PageSection.name == name).first()
+        #     if existing:
+        #         return JSONResponse({"message": "Name already exists"}, status_code=400)
+        #     page_section.name = name
+
+        if page_url:
+            page_section.page_url = page_url
+
+        if image:
+            current_time = datetime.now()
+            timestamp = datetime.timestamp(current_time)
+            image_url = f"page-section/{int(timestamp)}_{image.filename}"
+
+            file_content = await image.read()
+            file_obj = io.BytesIO(file_content)
+
+            file_aws_url = upload_to_s3(file_obj, image_url, image.content_type)
+            page_section.image_url = file_aws_url
+
+        db.commit()
+        db.refresh(page_section)
+
+        return JSONResponse({"message": "Page Section Updated"}, status_code=200)
+
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+    
