@@ -349,7 +349,16 @@ async def check_pincode_delivery_view(db: Session, pincode: str):
 
 # Orders List -------------------------------------------------------------
 async def user_orders_list_view(db: Session, user: dict):
-    orders = db.query(Order).filter(Order.user_id == user["id"]).order_by(Order.id.desc())
+    orders = (
+        db.query(Order)
+        .filter(
+            Order.user_id == user["id"],
+            Order.status != "EXPIRED"  # 👈 exclude EXPIRED orders
+        )
+        .order_by(Order.id.desc())
+        .all()
+    )
+
     if orders:
         return [await UserOrderBase.get_image_data(order) for order in orders]
 
@@ -365,12 +374,58 @@ async def user_order_detail_view(db: Session, user: dict, order_id: int):
     return JSONResponse({"message": "Order not exists"}, status_code=404)
 
 
+# Order Cancel Request
+async def order_cancel_request_view(db, order_id, order_data, user):
+    order = db.query(Order).filter(Order.id == order_id, Order.user_id == user["id"]).first()
+
+    if not order:
+        return JSONResponse({"message": "Order not found"}, status_code=404)
+
+    print("Order status ", order.status)
+    if order.status == "PENDING":
+        return JSONResponse({"message": "Order is still pending"}, status_code=400)
+    
+    if order.delivery_status == "DELIVERED":
+        return JSONResponse({"message": "Order is already delivered"}, status_code=400)
+
+    data = order_data.model_dump()
+    if not data.get("cancellation_reason", None):
+        return JSONResponse({"message": "Please provice cancellation reason"}, status_code=400)
+
+
+    order.cancellation_reason = data.get("cancellation_reason")
+    order.cancellation_date = data.get("cancellation_date", datetime.utcnow())
+    order.status = "CANCELLED REQUEST"
+
+    print("order staus 2 ", order.status)
+    db.commit()
+    db.refresh(order)
+
+    return JSONResponse({
+        "message": "We've received your cancellation request. It will be reviewed and processed within 3–4 business days."
+    })
+
+
+
 # Orders List - Admin
-async def orders_list_view(db: Session):
-    orders = db.query(Order).order_by(Order.id.desc())
+async def orders_list_view(db: Session, status: str = None, delivery_status: str = None, product_name: str = None):
+    query = db.query(Order).order_by(Order.id.desc())
+
+    # Only join Product table if filtering by product_name
+    if product_name:
+        query = query.join(Order.product).filter(Product.name.ilike(f"%{product_name}%"))
+    
+    if status:
+        query = query.filter(Order.status == status)
+    
+    if delivery_status:
+        query = query.filter(Order.delivery_status == delivery_status)
+    
+    orders = query.all()
+    
     if orders:
         return [await AdminOrderBase.get_data(order) for order in orders]
-
+    
     return JSONResponse([])
 
 
@@ -424,8 +479,24 @@ async def add_order_view(db: Session, order: CreateOrderBase, user: dict):
     return db_order
 
 
+# Upadte Order - Admin
+async def update_order_view(db, user, order_id, order_data):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    
+    if not order:
+        return JSONResponse({"message": "Order not exists"})
+
+    for field, value in order_data.dict(exclude_unset=True).items():
+        setattr(order, field, value)
+
+    db.commit()
+    db.refresh(order)
+    return JSONResponse({"message": "Order updated successfully"})
+
+
+
 async def checkout_view(db: Session, user: dict, checkout_data: CheckoutBase):
-    print("Checkout data ", checkout_data)
+    
     # Get user cart
     cart = db.query(Cart).filter(Cart.user_id == user['id']).first()
     if not cart:
@@ -871,3 +942,6 @@ async def update_page_section_view(db, pagesection_id, page_url, name, image):
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=400)
     
+
+
+

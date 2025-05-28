@@ -166,6 +166,12 @@ class OrderBase(BaseModel):
     created_on: datetime | None = None
 
 
+class AdminUpdateOrderBase(BaseModel):
+    address: str | None = None
+    status: str | None = None
+    delivery_status: str | None = None
+
+    
 class AdminOrderBase(BaseModel):
     id: int | None = None
     product_id: int | None = None
@@ -173,6 +179,8 @@ class AdminOrderBase(BaseModel):
     image: str | None = None
     address: str | None = None
     total_amount: int | None = None
+    cancellation_reason: str | None = None
+    cancellation_date: datetime | None = None
     user_id: int | None = None
     username: str | None = None
     status: str | None = None
@@ -201,6 +209,8 @@ class AdminOrderDetailBase(BaseModel):
     address: str | None = None
     total_amount: int | None = None
     user_id: int | None = None
+    cancellation_reason: str | None = None
+    cancellation_date: datetime | None = None
     username: str | None = None
     status: str | None = None
     delivery_status: str | None = None
@@ -393,3 +403,9 @@ class UserOrderDetailBase(BaseModel):
                 order.payment_detail = await get_order_payment_details(db, order)
 
         return order if order else None
+
+
+class OrderCancelBase(BaseModel):
+    cancellation_reason: str
+    cancellation_date: datetime | None = datetime.now()
+    
