@@ -6,7 +6,7 @@ from models.database import SessionLocal
 from schemas.products import (
     ProductActionBase, ProductBase, ProductImageBase, ProductCategoriesBase, AdminProductsListBase, ProductsListBase, ProductBase, ProductsDetailBase, UserCartBase, AddToCartBase, 
     PincodeBase, OrderBase, CreateOrderBase, CheckoutBase, CashfreeWebhookBase, PaymentBase, UserOrderBase, ProductRatingReviewBase, AddProductRatingReviewBase, AdminOrderBase, 
-    AdminOrderDetailBase, LatestOrdersBase, UpdatePincodeBase, PromocodeBase, PromocodeActionBase, PageSectionBase, UserOrderDetailBase
+    AdminOrderDetailBase, LatestOrdersBase, UpdatePincodeBase, PromocodeBase, PromocodeActionBase, PageSectionBase, UserOrderDetailBase, OrderCancelBase, AdminUpdateOrderBase
 )
 
 from crud.auth import get_current_user
@@ -15,7 +15,8 @@ from crud.products import (
     admin_products_list_view, get_product_view, user_cart_view, add_to_cart_view, delete_from_cart_view, add_pincode_view, pincodes_list_view, check_pincode_delivery_view, add_order_view,
     checkout_view, cashfree_view, cashfree_webhook_view, payments_view, orders_list_view, user_orders_list_view, user_cart_items_count, add_product_rating_view, product_rating_review_view,
     admin_order_detail_view, admin_orders_count_view, admin_latest_orders_view, update_pincode_view, add_promocode_view, promocodes_list_view, apply_promocode_view, update_promocode_view,
-    get_promocode_view, delete_promocode_view, get_product_category_view, add_page_section_view, get_page_section_view, update_page_section_view, user_order_detail_view
+    get_promocode_view, delete_promocode_view, get_product_category_view, add_page_section_view, get_page_section_view, update_page_section_view, user_order_detail_view, order_cancel_request_view,
+    update_order_view
 )
 
 
@@ -225,6 +226,7 @@ async def user_order_detail(
     return await user_order_detail_view(db=db, user=user, order_id=order_id)
 
 
+# Add User Order
 @router.post("/user/order/", response_model=OrderBase)
 async def add_order(
     order: CreateOrderBase,
@@ -234,17 +236,42 @@ async def add_order(
     return await add_order_view(db=db, order=order, user=user)
 
 
+# Update Order - Admin
+@router.patch("/admin/order/{order_id}/")
+async def update_order(
+    order_id: int,
+    order_data: AdminUpdateOrderBase,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return await update_order_view(db, user, order_id, order_data)
+
+
+# Cancel Order Request - User
+@router.post("/user/order-cancel-request/{order_id}/")
+async def order_cancel_request(
+    order_id: int,
+    order_data: OrderCancelBase,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    
+    return await order_cancel_request_view(db, order_id, order_data, user)
+
+
+# Get Orders - admin
 @router.get("/admin/orders/", response_model=list[AdminOrderBase])
 async def orders_list(
     status: str | None = None,
     delivery_status: str | None = None,
+    product_name: str | None = None,
     user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return await orders_list_view(db=db)
+    return await orders_list_view(db=db, status=status, delivery_status=delivery_status, product_name=product_name)
 
 
-
+# Order Detail - Admin
 @router.get("/admin/order/{order_id}/", response_model=AdminOrderDetailBase)
 async def admin_order_detail(
     order_id: int,
@@ -389,6 +416,7 @@ async def add_pagesection_data(
     page_url: str = Form(),
     name: str = Form(),
     image: UploadFile = Form(),
+    user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     return await add_page_section_view(db, page_url, name, image)
@@ -409,6 +437,7 @@ async def update_pagesection_data(
     page_url: str | None = Form(),
     name: str | None = Form(),
     image: UploadFile | None = Form(),
+    user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     return await update_page_section_view(db, pagesection_id, page_url, name, image)

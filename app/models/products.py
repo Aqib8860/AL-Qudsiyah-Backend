@@ -99,6 +99,8 @@ class Order(Base):
     address = Column(Text, nullable=True)
     total_amount = Column(Text, nullable=True)
     status = Column(String, default="PENDING", nullable=True)
+    cancellation_reason = Column(Text, nullable=True)
+    cancellation_date = Column(DateTime, nullable=True)
     delivery_status = Column(String, default="PENDING", nullable=True)
     created_on = Column(DateTime, default=datetime.now(IST), nullable=True)
 
