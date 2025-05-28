@@ -362,3 +362,34 @@ class PageSectionBase(BaseModel):
     page_url: str | None = None
     name: str | None = None
     image_url: str | None = None
+
+
+class UserOrderDetailBase(BaseModel):
+    id: int | None = None
+    product_id: int | None = None
+    product_name: str | None = None
+    image: str | None = None
+    address: str | None = None
+    total_amount: int | None = None
+    user_id: int | None = None
+    username: str | None = None
+    status: str | None = None
+    delivery_status: str | None = None
+    created_on: datetime | None = None
+    payment_detail: dict | None = None
+
+    class Config:
+        from_attributes = True
+    
+    @classmethod
+    async def get_data(cls, order: Dict[str, Any], db):
+        if order and order.product:
+            order.image = order.product.images[0].image_url if order.product.images else None
+            order.product_name = order.product.name if order.product else None
+            if order.user:
+                order.username = f"{order.user.first_name} {order.user.last_name} "
+        
+                # Get Payment Details
+                order.payment_detail = await get_order_payment_details(db, order)
+
+        return order if order else None
