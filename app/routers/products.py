@@ -6,7 +6,7 @@ from models.database import SessionLocal
 from schemas.products import (
     ProductActionBase, ProductBase, ProductImageBase, ProductCategoriesBase, AdminProductsListBase, ProductsListBase, ProductBase, ProductsDetailBase, UserCartBase, AddToCartBase, 
     PincodeBase, OrderBase, CreateOrderBase, CheckoutBase, CashfreeWebhookBase, PaymentBase, UserOrderBase, ProductRatingReviewBase, AddProductRatingReviewBase, AdminOrderBase, 
-    AdminOrderDetailBase, LatestOrdersBase, UpdatePincodeBase, PromocodeBase, PromocodeActionBase, PageSectionBase
+    AdminOrderDetailBase, LatestOrdersBase, UpdatePincodeBase, PromocodeBase, PromocodeActionBase, PageSectionBase, UserOrderDetailBase
 )
 
 from crud.auth import get_current_user
@@ -15,7 +15,7 @@ from crud.products import (
     admin_products_list_view, get_product_view, user_cart_view, add_to_cart_view, delete_from_cart_view, add_pincode_view, pincodes_list_view, check_pincode_delivery_view, add_order_view,
     checkout_view, cashfree_view, cashfree_webhook_view, payments_view, orders_list_view, user_orders_list_view, user_cart_items_count, add_product_rating_view, product_rating_review_view,
     admin_order_detail_view, admin_orders_count_view, admin_latest_orders_view, update_pincode_view, add_promocode_view, promocodes_list_view, apply_promocode_view, update_promocode_view,
-    get_promocode_view, delete_promocode_view, get_product_category_view, add_page_section_view, get_page_section_view, update_page_section_view
+    get_promocode_view, delete_promocode_view, get_product_category_view, add_page_section_view, get_page_section_view, update_page_section_view, user_order_detail_view
 )
 
 
@@ -215,6 +215,15 @@ async def user_orders_list(
 ):
     return await user_orders_list_view(db=db, user=user)
 
+# Get User Order Detail
+@router.get("/user/orders/{order_id}", response_model=UserOrderDetailBase)
+async def user_order_detail(
+    order_id: int,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return await user_order_detail_view(db=db, user=user, order_id=order_id)
+
 
 @router.post("/user/order/", response_model=OrderBase)
 async def add_order(
@@ -403,3 +412,5 @@ async def update_pagesection_data(
     db: Session = Depends(get_db)
 ):
     return await update_page_section_view(db, pagesection_id, page_url, name, image)
+
+

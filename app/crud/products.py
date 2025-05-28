@@ -19,7 +19,7 @@ from models.products import (
 from schemas.products import (
     ProductActionBase, AdminProductsListBase, ProductsListBase,  AddToCartBase, PincodeBase, OrderBase, CreateOrderBase, CheckoutBase,
     UserOrderBase, AddProductRatingReviewBase, ProductRatingReviewBase, AdminOrderBase, AdminOrderDetailBase, LatestOrdersBase, 
-    UpdatePincodeBase, PromocodeActionBase, PromocodeBase
+    UpdatePincodeBase, PromocodeActionBase, PromocodeBase, UserOrderDetailBase
 )
 
 
@@ -356,6 +356,16 @@ async def user_orders_list_view(db: Session, user: dict):
     return JSONResponse([])
 
 
+# User Order Detail
+async def user_order_detail_view(db: Session, user: dict, order_id: int):
+    order = db.query(Order).filter(Order.id == order_id, Order.user_id == user["id"]).first()
+    if order:
+        return await UserOrderDetailBase.get_data(order, db)
+
+    return JSONResponse({"message": "Order not exists"}, status_code=404)
+
+
+# Orders List - Admin
 async def orders_list_view(db: Session):
     orders = db.query(Order).order_by(Order.id.desc())
     if orders:
