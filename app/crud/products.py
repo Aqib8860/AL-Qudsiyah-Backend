@@ -35,6 +35,7 @@ async def create_product(db: Session, product: ProductActionBase):
             sale_price=product.sale_price,
             is_available=product.is_available,
             category=product.category,
+            ingredients=product.ingredients,
             description=product.description,
             slug=product.slug,
             quantity=product.quantity,
