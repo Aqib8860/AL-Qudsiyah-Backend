@@ -8,6 +8,7 @@ class ProductBase(BaseModel):
     name: str | None = None
     sale_price: float | None = None
     original_price: float | None = None
+    ingredients: str | None = None
     is_available: bool | None = None
     category: str | None = None
     description: str | None = None
@@ -21,6 +22,7 @@ class ProductActionBase(BaseModel):
     name: str | None = None
     sale_price: float | None = None
     original_price: float | None = None
+    ingredients: str | None = None
     is_available: bool | None = None
     category: str | None = None
     description: str | None = None
@@ -94,6 +96,7 @@ class ProductsDetailBase(BaseModel):
     sale_price: float | None = None
     original_price: float | None = None
     is_available: bool | None = None
+    ingredients: str | None = None
     category: str | None = None
     description: str | None = None
     slug: str | None = None

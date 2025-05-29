@@ -17,6 +17,7 @@ class Product(Base):
     original_price = Column(Float, default=0)
     is_available = Column(Boolean, default=False)
     is_giftset = Column(Boolean, default=False)
+    ingredients = Column(String, nullable=True)
     category = Column(String, index=True, nullable=True)
     description = Column(Text, nullable=True)
     slug = Column(String, index=True, nullable=True)
